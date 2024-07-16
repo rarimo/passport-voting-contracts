@@ -1,9 +1,20 @@
 {
-  "name": "hardhat-template",
-  "version": "1.0.0",
+  "name": "@rarimo/passport-voting-contracts",
+  "version": "0.1.0",
   "license": "MIT",
-  "author": "Distributed Lab",
-  "description": "",
+  "author": "Zero Block Global Foundation",
+  "description": "Decentralized Identity Voting",
+  "keywords": [
+    "solidity",
+    "ethereum",
+    "smart-contracts",
+    "zero-knowledge",
+    "passports"
+  ],
+  "files": [
+    "**/*.sol",
+    "!mock/**/*"
+  ],
   "scripts": {
     "prepare": "husky",
     "compile": "npx hardhat compile",
@@ -27,15 +38,15 @@
     "lint-fix": "npm run lint-sol-fix && npm run lint-ts-fix && npm run lint-json-fix",
     "lint-json-fix": "prettier --write \"./**/*.json\"",
     "lint-ts-fix": "prettier --write \"./**/*.ts\"",
-    "lint-sol-fix": "prettier --write \"contracts/**/*.sol\""
+    "lint-sol-fix": "prettier --write \"contracts/**/*.sol\"",
+    "publish-to-npm": "npm run lint-fix && bash ./scripts/publish.sh --public"
   },
   "dependencies": {
-    "@openzeppelin/contracts": "5.0.2",
-    "@openzeppelin/contracts-upgradeable": "5.0.2",
-    "@solarity/solidity-lib": "2.7.2",
-    "dotenv": "16.4.5",
-    "hardhat": "2.20.1",
-    "typechain": "8.3.2"
+    "@openzeppelin/contracts": "4.9.6",
+    "@openzeppelin/contracts-upgradeable": "4.9.6",
+    "@rarimo/passport-contracts": "0.1.0",
+    "@iden3/contracts": "1.4.7",
+    "@solarity/solidity-lib": "2.7.10"
   },
   "devDependencies": {
     "@metamask/eth-sig-util": "^7.0.1",
@@ -52,7 +63,9 @@
     "@types/node": "^18.16.0",
     "bignumber.js": "^9.1.2",
     "chai": "^4.4.1",
+    "dotenv": "^16.4.5",
     "ethers": "^6.11.1",
+    "hardhat": "^2.20.1",
     "hardhat-contract-sizer": "^2.10.0",
     "hardhat-gas-reporter": "^2.0.2",
     "husky": "^9.0.11",
@@ -64,6 +77,7 @@
     "solidity-coverage": "^0.8.11",
     "ts-node": "^10.9.2",
     "tsconfig-paths": "^4.2.0",
+    "typechain": "^8.3.2",
     "typescript": "^5.4.3"
   }
 }
