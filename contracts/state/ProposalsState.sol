@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.16;
 
-import {PoseidonUnit2L} from "@iden3/contracts/lib/Poseidon.sol";
+import {PoseidonUnit3L} from "@iden3/contracts/lib/Poseidon.sol";
 
 import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import {ERC1967Proxy} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
@@ -31,6 +31,7 @@ contract ProposalsState is OwnableUpgradeable {
      * available choices. Note that the choices start from 0.
      */
     struct ProposalConfig {
+        address proposalSMT;
         uint256 startTimestamp;
         uint256 duration;
         string description;
@@ -62,7 +63,7 @@ contract ProposalsState is OwnableUpgradeable {
     mapping(uint256 => Proposal) internal _proposals;
 
     event ProposalCreated(uint256 indexed proposalId);
-    event VoteCast(uint256 indexed proposalId, uint256[] vote);
+    event VoteCast(uint256 indexed proposalId, uint256 userNullifier, uint256[] vote);
 
     modifier onlyVoting() {
         _onlyVoting();
@@ -86,7 +87,9 @@ contract ProposalsState is OwnableUpgradeable {
             "ProposalsState: the number of options can't be zero"
         );
         require(
-            proposalConfig_.votingWhitelist.length == proposalConfig_.votingWhitelistData.length,
+            proposalConfig_.votingWhitelist.length > 0 &&
+                proposalConfig_.votingWhitelist.length ==
+                proposalConfig_.votingWhitelistData.length,
             "ProposalsState: whitelist length mismatch"
         );
 
@@ -107,12 +110,17 @@ contract ProposalsState is OwnableUpgradeable {
         uint256 proposalId_ = ++lastProposalId;
         Proposal storage _proposal = _proposals[proposalId_];
 
-        _proposal.proposalSMT = address(
-            new ERC1967Proxy(
-                proposalSMTImpl,
-                abi.encodeWithSelector(ProposalSMT.__ProposalSMT_init.selector, address(this))
-            )
-        );
+        if (proposalConfig_.proposalSMT == address(0)) {
+            _proposal.proposalSMT = address(
+                new ERC1967Proxy(
+                    proposalSMTImpl,
+                    abi.encodeWithSelector(ProposalSMT.__ProposalSMT_init.selector, address(this))
+                )
+            );
+        } else {
+            _proposal.proposalSMT = proposalConfig_.proposalSMT;
+        }
+
         _proposal.config = proposalConfig_;
 
         emit ProposalCreated(proposalId_);
@@ -150,11 +158,12 @@ contract ProposalsState is OwnableUpgradeable {
             _proposal.results[i][vote_[i]] += 1;
         }
 
-        emit VoteCast(proposalId_, vote_);
+        emit VoteCast(proposalId_, userNullifier_, vote_);
     }
 
     function getProposalEventId(uint256 proposalId_) external view returns (uint256) {
-        return PoseidonUnit2L.poseidon([uint256(uint160(address(this))), proposalId_]);
+        return
+            PoseidonUnit3L.poseidon([block.chainid, uint256(uint160(address(this))), proposalId_]);
     }
 
     function getProposalInfo(

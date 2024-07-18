@@ -16,7 +16,7 @@ contract ProposalSMT is Initializable {
 
     SparseMerkleTree.Bytes32SMT internal _bytes32Tree;
 
-    event RootUpdated(bytes32 root);
+    event RootUpdated(bytes32 indexed root);
 
     modifier onlyProposalsState() {
         _onlyProposalsState();
