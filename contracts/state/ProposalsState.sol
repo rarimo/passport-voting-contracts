@@ -31,7 +31,6 @@ contract ProposalsState is OwnableUpgradeable {
      * available choices. Note that the choices start from 0.
      */
     struct ProposalConfig {
-        address proposalSMT;
         uint256 startTimestamp;
         uint256 duration;
         string description;
@@ -110,17 +109,12 @@ contract ProposalsState is OwnableUpgradeable {
         uint256 proposalId_ = ++lastProposalId;
         Proposal storage _proposal = _proposals[proposalId_];
 
-        if (proposalConfig_.proposalSMT == address(0)) {
-            _proposal.proposalSMT = address(
-                new ERC1967Proxy(
-                    proposalSMTImpl,
-                    abi.encodeWithSelector(ProposalSMT.__ProposalSMT_init.selector, address(this))
-                )
-            );
-        } else {
-            _proposal.proposalSMT = proposalConfig_.proposalSMT;
-        }
-
+        _proposal.proposalSMT = address(
+            new ERC1967Proxy(
+                proposalSMTImpl,
+                abi.encodeWithSelector(ProposalSMT.__ProposalSMT_init.selector, address(this))
+            )
+        );
         _proposal.config = proposalConfig_;
 
         emit ProposalCreated(proposalId_);
