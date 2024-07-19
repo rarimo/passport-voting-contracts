@@ -32,16 +32,23 @@ const config: HardhatUserConfig = {
       accounts: privateKey(),
       gasMultiplier: 1.2,
     },
+    "rarimo-testnet": {
+      url: "https://rpc.evm.node2.mainnet-beta.rarimo.com",
+      accounts: privateKey(),
+      gasPrice: 0,
+      gasMultiplier: 1.2,
+    },
+    "rarimo-mainnet": {
+      url: "https://rpc.evm.mainnet.rarimo.com",
+      accounts: privateKey(),
+      gasPrice: 0,
+      gasMultiplier: 1.2,
+    },
     chapel: {
       url: "https://data-seed-prebsc-1-s1.binance.org:8545",
       accounts: privateKey(),
       gasMultiplier: 1.2,
       timeout: 60000,
-    },
-    mumbai: {
-      url: "https://polygon-mumbai-bor-rpc.publicnode.com",
-      accounts: privateKey(),
-      gasMultiplier: 1.2,
     },
     fuji: {
       url: `https://avalanche-fuji.infura.io/v3/${process.env.INFURA_KEY}`,
@@ -81,15 +88,34 @@ const config: HardhatUserConfig = {
   },
   etherscan: {
     apiKey: {
+      "rarimo-testnet": "abc",
+      "rarimo-mainnet": "abc",
       sepolia: `${process.env.ETHERSCAN_KEY}`,
       mainnet: `${process.env.ETHERSCAN_KEY}`,
       bscTestnet: `${process.env.BSCSCAN_KEY}`,
       bsc: `${process.env.BSCSCAN_KEY}`,
-      polygonMumbai: `${process.env.POLYGONSCAN_KEY}`,
       polygon: `${process.env.POLYGONSCAN_KEY}`,
       avalancheFujiTestnet: `${process.env.AVALANCHE_KEY}`,
       avalanche: `${process.env.AVALANCHE_KEY}`,
     },
+    customChains: [
+      {
+        network: "rarimo-testnet",
+        chainId: 42,
+        urls: {
+          apiURL: "https://evmscan.mainnet-beta.rarimo.com/api",
+          browserURL: "https://newevmscan.mainnet-beta.rarimo.com",
+        },
+      },
+      {
+        network: "rarimo-mainnet",
+        chainId: 201411,
+        urls: {
+          apiURL: "https://evmscan.rarimo.com/api",
+          browserURL: "https://evmscan.rarimo.com",
+        },
+      },
+    ],
   },
   migrate: {
     pathToMigrations: "./deploy/",

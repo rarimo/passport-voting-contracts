@@ -10,7 +10,7 @@ import {SparseMerkleTree} from "@solarity/solidity-lib/libs/data-structures/Spar
 contract ProposalSMT is Initializable {
     using SparseMerkleTree for SparseMerkleTree.Bytes32SMT;
 
-    uint256 public constant TREE_SIZE = 80;
+    uint256 public constant TREE_SIZE = 40;
 
     address public proposalsState;
 

@@ -78,13 +78,12 @@ contract ProposalsState is OwnableUpgradeable, TSSUpgradeable {
     function __ProposalsState_init(
         address signer_,
         string calldata chainName_,
-        string calldata initialVotingName_,
-        address initialVoting_
+        address proposalSMTImpl_
     ) external initializer {
         __Ownable_init();
         __TSSSigner_init(signer_, chainName_);
 
-        _addVoting(initialVotingName_, initialVoting_);
+        proposalSMTImpl = proposalSMTImpl_;
     }
 
     function createProposal(ProposalConfig calldata proposalConfig_) external onlyOwner {
