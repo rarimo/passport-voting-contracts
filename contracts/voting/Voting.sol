@@ -6,13 +6,14 @@ import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/Own
 import {VerifierHelper} from "@solarity/solidity-lib/libs/zkp/snarkjs/VerifierHelper.sol";
 import {ArrayHelper} from "@solarity/solidity-lib/libs/arrays/ArrayHelper.sol";
 
+import {TSSUpgradeable} from "@rarimo/passport-contracts/state/TSSUpgradeable.sol";
 import {PoseidonSMT} from "@rarimo/passport-contracts/state/PoseidonSMT.sol";
 import {Date2Time} from "@rarimo/passport-contracts/utils/Date2Time.sol";
 
 import {ProposalsState} from "../state/ProposalsState.sol";
 import {BinSearch} from "../utils/BinSearch.sol";
 
-contract Voting is OwnableUpgradeable {
+contract Voting is OwnableUpgradeable, TSSUpgradeable {
     using BinSearch for *;
     using VerifierHelper for address;
 
@@ -41,11 +42,14 @@ contract Voting is OwnableUpgradeable {
     address public votingVerifier;
 
     function __Voting_init(
+        address signer_,
+        string calldata chainName_,
         address registrationSMT_,
         address proposalsState_,
         address votingVerifier_
     ) external initializer {
         __Ownable_init();
+        __TSSSigner_init(signer_, chainName_);
 
         registrationSMT = registrationSMT_;
 
@@ -105,6 +109,8 @@ contract Voting is OwnableUpgradeable {
 
         ProposalsState(proposalsState).vote(proposalId_, userData_.nullifier, vote_);
     }
+
+    function _authorizeUpgrade(address) internal virtual override onlyOwner {}
 
     function _getProposalRules(
         uint256 proposalId_

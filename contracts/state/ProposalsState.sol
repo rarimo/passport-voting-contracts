@@ -8,10 +8,12 @@ import {ERC1967Proxy} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.s
 
 import {DynamicSet} from "@solarity/solidity-lib/libs/data-structures/DynamicSet.sol";
 
+import {TSSUpgradeable} from "@rarimo/passport-contracts/state/TSSUpgradeable.sol";
+
 import {ProposalSMT} from "./ProposalSMT.sol";
 import {BinSearch} from "../utils/BinSearch.sol";
 
-contract ProposalsState is OwnableUpgradeable {
+contract ProposalsState is OwnableUpgradeable, TSSUpgradeable {
     using BinSearch for *;
     using DynamicSet for DynamicSet.StringSet;
 
@@ -19,7 +21,8 @@ contract ProposalsState is OwnableUpgradeable {
         None,
         Waiting,
         Started,
-        Ended
+        Ended,
+        DoNotShow
     }
 
     /**
@@ -48,6 +51,7 @@ contract ProposalsState is OwnableUpgradeable {
 
     struct Proposal {
         address proposalSMT;
+        bool hidden;
         mapping(uint256 => mapping(uint256 => uint256)) results; // proposal option => choice => number of votes
         ProposalConfig config;
     }
@@ -61,7 +65,9 @@ contract ProposalsState is OwnableUpgradeable {
 
     mapping(uint256 => Proposal) internal _proposals;
 
-    event ProposalCreated(uint256 indexed proposalId);
+    event ProposalCreated(uint256 indexed proposalId, address proposalSMT);
+    event ProposalConfigChanged(uint256 indexed proposalId);
+    event ProposalHidden(uint256 indexed proposalId, bool hide);
     event VoteCast(uint256 indexed proposalId, uint256 userNullifier, uint256[] vote);
 
     modifier onlyVoting() {
@@ -70,41 +76,19 @@ contract ProposalsState is OwnableUpgradeable {
     }
 
     function __ProposalsState_init(
+        address signer_,
+        string calldata chainName_,
         string calldata initialVotingName_,
         address initialVoting_
     ) external initializer {
         __Ownable_init();
+        __TSSSigner_init(signer_, chainName_);
 
         _addVoting(initialVotingName_, initialVoting_);
     }
 
     function createProposal(ProposalConfig calldata proposalConfig_) external onlyOwner {
-        require(proposalConfig_.startTimestamp > 0, "ProposalsState: zero start timestamp");
-        require(proposalConfig_.duration > 0, "ProposalsState: zero duration");
-        require(
-            proposalConfig_.acceptedOptions.length > 0,
-            "ProposalsState: the number of options can't be zero"
-        );
-        require(
-            proposalConfig_.votingWhitelist.length > 0 &&
-                proposalConfig_.votingWhitelist.length ==
-                proposalConfig_.votingWhitelistData.length,
-            "ProposalsState: whitelist length mismatch"
-        );
-
-        for (uint256 i = 0; i < proposalConfig_.acceptedOptions.length; ++i) {
-            require(
-                proposalConfig_.acceptedOptions[i] > 0,
-                "ProposalsState: the option can't be zero"
-            );
-        }
-
-        for (uint256 i = 1; i < proposalConfig_.acceptedOptions.length; ++i) {
-            require(
-                proposalConfig_.votingWhitelist[i] > proposalConfig_.votingWhitelist[i - 1],
-                "ProposalsState: the voting whitelist is not sorted"
-            );
-        }
+        _validateProposalConfig(proposalConfig_);
 
         uint256 proposalId_ = ++lastProposalId;
         Proposal storage _proposal = _proposals[proposalId_];
@@ -117,7 +101,41 @@ contract ProposalsState is OwnableUpgradeable {
         );
         _proposal.config = proposalConfig_;
 
-        emit ProposalCreated(proposalId_);
+        emit ProposalCreated(proposalId_, _proposal.proposalSMT);
+    }
+
+    function changeProposalConfig(
+        uint256 proposalId_,
+        ProposalConfig calldata newProposalConfig_
+    ) external onlyOwner {
+        require(
+            getProposalStatus(proposalId_) != ProposalStatus.None,
+            "ProposalsState: proposal doesn't exist"
+        );
+        _validateProposalConfig(newProposalConfig_);
+
+        _proposals[proposalId_].config = newProposalConfig_;
+
+        emit ProposalConfigChanged(proposalId_);
+    }
+
+    function hideProposal(uint256 proposalId_, bool hide_) external onlyOwner {
+        require(
+            getProposalStatus(proposalId_) != ProposalStatus.None,
+            "ProposalsState: proposal doesn't exist"
+        );
+
+        _proposals[proposalId_].hidden = hide_;
+
+        emit ProposalHidden(proposalId_, hide_);
+    }
+
+    function addVoting(string calldata votingName_, address votingAddress_) external onlyOwner {
+        _addVoting(votingName_, votingAddress_);
+    }
+
+    function removeVoting(string calldata votingName_) external onlyOwner {
+        _removeVoting(votingName_);
     }
 
     function vote(
@@ -193,6 +211,10 @@ contract ProposalsState is OwnableUpgradeable {
             return ProposalStatus.None;
         }
 
+        if (_proposal.hidden) {
+            return ProposalStatus.DoNotShow;
+        }
+
         if (block.timestamp < _config.startTimestamp) {
             return ProposalStatus.Waiting;
         }
@@ -204,11 +226,65 @@ contract ProposalsState is OwnableUpgradeable {
         return ProposalStatus.Started;
     }
 
-    function _addVoting(string memory votingName_, address votingAddress) internal {
-        require(_votingKeys.add(votingName_), "ProposalsState: duplicate voting");
-        _votings[votingName_] = votingAddress;
-        _votingExists[votingAddress] = true;
+    function getVotings() external view returns (string[] memory keys_, address[] memory values_) {
+        keys_ = _votingKeys.values();
+        values_ = new address[](keys_.length);
+
+        for (uint256 i = 0; i < keys_.length; i++) {
+            values_[i] = _votings[keys_[i]];
+        }
     }
+
+    function getVotingByKey(string calldata key_) external view returns (address) {
+        return _votings[key_];
+    }
+
+    function isVoting(address voting_) external view returns (bool) {
+        return _votingExists[voting_];
+    }
+
+    function _addVoting(string memory votingName_, address votingAddress_) internal {
+        require(_votingKeys.add(votingName_), "ProposalsState: duplicate voting");
+        _votings[votingName_] = votingAddress_;
+        _votingExists[votingAddress_] = true;
+    }
+
+    function _removeVoting(string memory votingName_) internal {
+        delete _votingExists[_votings[votingName_]];
+        delete _votings[votingName_];
+        _votingKeys.remove(votingName_);
+    }
+
+    function _validateProposalConfig(ProposalConfig calldata proposalConfig_) internal pure {
+        require(proposalConfig_.startTimestamp > 0, "ProposalsState: zero start timestamp");
+        require(proposalConfig_.duration > 0, "ProposalsState: zero duration");
+        require(
+            proposalConfig_.acceptedOptions.length > 0,
+            "ProposalsState: the number of options can't be zero"
+        );
+        require(
+            proposalConfig_.votingWhitelist.length > 0 &&
+                proposalConfig_.votingWhitelist.length ==
+                proposalConfig_.votingWhitelistData.length,
+            "ProposalsState: whitelist length mismatch"
+        );
+
+        for (uint256 i = 0; i < proposalConfig_.acceptedOptions.length; ++i) {
+            require(
+                proposalConfig_.acceptedOptions[i] > 0,
+                "ProposalsState: the option can't be zero"
+            );
+        }
+
+        for (uint256 i = 1; i < proposalConfig_.acceptedOptions.length; ++i) {
+            require(
+                proposalConfig_.votingWhitelist[i] > proposalConfig_.votingWhitelist[i - 1],
+                "ProposalsState: the voting whitelist is not sorted"
+            );
+        }
+    }
+
+    function _authorizeUpgrade(address) internal virtual override onlyOwner {}
 
     function _onlyVoting() internal view {
         require(_votingExists[msg.sender], "ProposalsState: not a voting");
