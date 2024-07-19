@@ -26,18 +26,22 @@ contract ProposalsState is OwnableUpgradeable, TSSUpgradeable {
     }
 
     /**
-     * @dev acceptedOptions explainer:
+     * @dev Proposal options explainer:
      *
-     * The length of the array is the number of available options and each element is the number of choices per option.
+     * The length of the acceptedOptions array is the number of available proposal options and every `1` bit of the array's
+     * element indicates the available choices. Only the numbers of (2^n)-1 are accepted. The choices start from 0.
      *
-     * The array [2, 5, 1] indicates that there are 3 questions to be answered with each question having 4, 5, and 1
-     * available choices. Note that the choices start from 0.
+     * If `multichoice` is set to `true`, users may answer with multiple options at once. Otherwise, only the numbers
+     * of powers of 2 are accepted.
+     *
+     * The array [3, 7] indicates that there are [0b11, 0b111] -> 2 and 3 choices per options correspondingly available.
      */
     struct ProposalConfig {
-        uint256 startTimestamp;
-        uint256 duration;
+        uint64 startTimestamp;
+        uint64 duration;
+        bool multichoice;
+        uint8[] acceptedOptions; // maximum 8 choices per option
         string description;
-        uint256[] acceptedOptions;
         address[] votingWhitelist; // must be sorted
         bytes[] votingWhitelistData; // data per voting whitelist
     }
@@ -46,7 +50,7 @@ contract ProposalsState is OwnableUpgradeable, TSSUpgradeable {
         address proposalSMT;
         ProposalStatus status;
         ProposalConfig config;
-        uint256[][] votingResults;
+        uint256[8][] votingResults; // dynamic array of static arrays of [8]
     }
 
     struct Proposal {
@@ -68,7 +72,7 @@ contract ProposalsState is OwnableUpgradeable, TSSUpgradeable {
     event ProposalCreated(uint256 indexed proposalId, address proposalSMT);
     event ProposalConfigChanged(uint256 indexed proposalId);
     event ProposalHidden(uint256 indexed proposalId, bool hide);
-    event VoteCast(uint256 indexed proposalId, uint256 userNullifier, uint256[] vote);
+    event VoteCast(uint256 indexed proposalId, uint256 userNullifier, uint8[] vote);
 
     modifier onlyVoting() {
         _onlyVoting();
@@ -140,7 +144,7 @@ contract ProposalsState is OwnableUpgradeable, TSSUpgradeable {
     function vote(
         uint256 proposalId_,
         uint256 userNullifier_,
-        uint256[] calldata vote_
+        uint8[] calldata vote_
     ) external onlyVoting {
         Proposal storage _proposal = _proposals[proposalId_];
         ProposalConfig storage _config = _proposal.config;
@@ -161,12 +165,24 @@ contract ProposalsState is OwnableUpgradeable, TSSUpgradeable {
         ProposalSMT(_proposal.proposalSMT).add(bytes32(userNullifier_), bytes32(userNullifier_)); // + checks for double voting
 
         for (uint256 i = 0; i < vote_.length; ++i) {
+            uint8 voteChoice = vote_[i];
+            uint8 bitNum;
+
             require(
-                vote_[i] < _config.acceptedOptions[i],
-                "ProposalsState: wrong vote option choice"
+                voteChoice > 0 && voteChoice <= _config.acceptedOptions[i],
+                "ProposalsState: vote overflow"
+            );
+            require(
+                _config.multichoice || (voteChoice - 1) & voteChoice == 0,
+                "ProposalsState: vote not a 2^n"
             );
 
-            _proposal.results[i][vote_[i]] += 1;
+            while (voteChoice > 0) {
+                _proposal.results[i][bitNum] += voteChoice & 1;
+
+                ++bitNum;
+                voteChoice >>= 1;
+            }
         }
 
         emit VoteCast(proposalId_, userNullifier_, vote_);
@@ -187,12 +203,10 @@ contract ProposalsState is OwnableUpgradeable, TSSUpgradeable {
         info_.status = getProposalStatus(proposalId_);
         info_.config = _config;
 
-        info_.votingResults = new uint256[][](_config.acceptedOptions.length);
+        info_.votingResults = new uint256[8][](_config.acceptedOptions.length);
 
         for (uint256 i = 0; i < _config.acceptedOptions.length; i++) {
-            info_.votingResults[i] = new uint256[](_config.acceptedOptions[i]);
-
-            for (uint256 j = 0; j < info_.votingResults[i].length; ++j) {
+            for (uint256 j = 0; j < 8; ++j) {
                 info_.votingResults[i][j] = _proposal.results[i][j];
             }
         }
@@ -269,10 +283,12 @@ contract ProposalsState is OwnableUpgradeable, TSSUpgradeable {
         );
 
         for (uint256 i = 0; i < proposalConfig_.acceptedOptions.length; ++i) {
-            require(
-                proposalConfig_.acceptedOptions[i] > 0,
-                "ProposalsState: the option can't be zero"
-            );
+            uint8 choices = proposalConfig_.acceptedOptions[i];
+
+            unchecked {
+                require(choices > 0, "ProposalsState: choices can't be zero");
+                require((choices + 1) & choices == 0, "ProposalsState: choices are not (2^n)-1");
+            }
         }
 
         for (uint256 i = 1; i < proposalConfig_.acceptedOptions.length; ++i) {

@@ -61,7 +61,7 @@ contract Voting is OwnableUpgradeable, TSSUpgradeable {
         bytes32 registrationRoot_,
         uint256 currentDate_,
         uint256 proposalId_,
-        uint256[] memory vote_,
+        uint8[] memory vote_,
         UserData memory userData_,
         VerifierHelper.ProofPoints memory zkPoints_
     ) external {
