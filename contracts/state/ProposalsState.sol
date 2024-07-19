@@ -17,6 +17,8 @@ contract ProposalsState is OwnableUpgradeable, TSSUpgradeable {
     using BinSearch for *;
     using DynamicSet for DynamicSet.StringSet;
 
+    uint256 public constant MAXIMUM_CHOICES_PER_OPTION = 8;
+
     enum ProposalStatus {
         None,
         Waiting,
@@ -40,7 +42,7 @@ contract ProposalsState is OwnableUpgradeable, TSSUpgradeable {
         uint64 startTimestamp;
         uint64 duration;
         bool multichoice;
-        uint8[] acceptedOptions; // maximum 8 choices per option
+        uint256[] acceptedOptions; // maximum `MAXIMUM_CHOICES_PER_OPTION` choices per option
         string description;
         address[] votingWhitelist; // must be sorted
         bytes[] votingWhitelistData; // data per voting whitelist
@@ -50,7 +52,7 @@ contract ProposalsState is OwnableUpgradeable, TSSUpgradeable {
         address proposalSMT;
         ProposalStatus status;
         ProposalConfig config;
-        uint256[8][] votingResults; // dynamic array of static arrays of [8]
+        uint256[MAXIMUM_CHOICES_PER_OPTION][] votingResults; // dynamic array of static arrays of [MAXIMUM_CHOICES_PER_OPTION]
     }
 
     struct Proposal {
@@ -72,7 +74,7 @@ contract ProposalsState is OwnableUpgradeable, TSSUpgradeable {
     event ProposalCreated(uint256 indexed proposalId, address proposalSMT);
     event ProposalConfigChanged(uint256 indexed proposalId);
     event ProposalHidden(uint256 indexed proposalId, bool hide);
-    event VoteCast(uint256 indexed proposalId, uint256 userNullifier, uint8[] vote);
+    event VoteCast(uint256 indexed proposalId, uint256 userNullifier, uint256[] vote);
 
     modifier onlyVoting() {
         _onlyVoting();
@@ -144,7 +146,7 @@ contract ProposalsState is OwnableUpgradeable, TSSUpgradeable {
     function vote(
         uint256 proposalId_,
         uint256 userNullifier_,
-        uint8[] calldata vote_
+        uint256[] calldata vote_
     ) external onlyVoting {
         Proposal storage _proposal = _proposals[proposalId_];
         ProposalConfig storage _config = _proposal.config;
@@ -165,8 +167,8 @@ contract ProposalsState is OwnableUpgradeable, TSSUpgradeable {
         ProposalSMT(_proposal.proposalSMT).add(bytes32(userNullifier_), bytes32(userNullifier_)); // + checks for double voting
 
         for (uint256 i = 0; i < vote_.length; ++i) {
-            uint8 voteChoice = vote_[i];
-            uint8 bitNum;
+            uint256 voteChoice = vote_[i];
+            uint256 bitNum;
 
             require(
                 voteChoice > 0 && voteChoice <= _config.acceptedOptions[i],
@@ -203,10 +205,12 @@ contract ProposalsState is OwnableUpgradeable, TSSUpgradeable {
         info_.status = getProposalStatus(proposalId_);
         info_.config = _config;
 
-        info_.votingResults = new uint256[8][](_config.acceptedOptions.length);
+        info_.votingResults = new uint256[MAXIMUM_CHOICES_PER_OPTION][](
+            _config.acceptedOptions.length
+        );
 
         for (uint256 i = 0; i < _config.acceptedOptions.length; i++) {
-            for (uint256 j = 0; j < 8; ++j) {
+            for (uint256 j = 0; j < MAXIMUM_CHOICES_PER_OPTION; ++j) {
                 info_.votingResults[i][j] = _proposal.results[i][j];
             }
         }
@@ -283,12 +287,13 @@ contract ProposalsState is OwnableUpgradeable, TSSUpgradeable {
         );
 
         for (uint256 i = 0; i < proposalConfig_.acceptedOptions.length; ++i) {
-            uint8 choices = proposalConfig_.acceptedOptions[i];
+            uint256 choices = proposalConfig_.acceptedOptions[i];
 
-            unchecked {
-                require(choices > 0, "ProposalsState: choices can't be zero");
-                require((choices + 1) & choices == 0, "ProposalsState: choices are not (2^n)-1");
-            }
+            require(
+                choices > 0 && choices < 2 ** MAXIMUM_CHOICES_PER_OPTION,
+                "ProposalsState: choices overflow"
+            );
+            require((choices + 1) & choices == 0, "ProposalsState: choices are not (2^n)-1");
         }
 
         for (uint256 i = 1; i < proposalConfig_.acceptedOptions.length; ++i) {
