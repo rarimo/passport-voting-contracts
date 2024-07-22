@@ -125,10 +125,10 @@ contract Voting is OwnableUpgradeable, TSSUpgradeable {
     }
 
     function _validateDate(uint256 date_) internal view returns (bool) {
-        uint256[] memory asciiTime = new uint256[](6);
+        uint256[] memory asciiTime = new uint256[](3);
 
-        for (uint256 i = 0; i < 6; i++) {
-            uint256 asciiNum_ = uint8(date_ >> (6 - i - 1)) - 48;
+        for (uint256 i = 0; i < 6; ++i) {
+            uint256 asciiNum_ = uint8(date_ >> ((6 - i - 1) * 8)) - 48;
 
             asciiTime[i / 2] += i % 2 == 0 ? asciiNum_ * 10 : asciiNum_;
         }

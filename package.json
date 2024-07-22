@@ -45,7 +45,7 @@
   "dependencies": {
     "@openzeppelin/contracts": "4.9.6",
     "@openzeppelin/contracts-upgradeable": "4.9.6",
-    "@rarimo/passport-contracts": "0.1.1",
+    "@rarimo/passport-contracts": "0.1.2",
     "@iden3/contracts": "1.4.7",
     "@solarity/solidity-lib": "2.7.10"
   },

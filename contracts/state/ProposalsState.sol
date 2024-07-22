@@ -296,7 +296,7 @@ contract ProposalsState is OwnableUpgradeable, TSSUpgradeable {
             require((choices + 1) & choices == 0, "ProposalsState: choices are not (2^n)-1");
         }
 
-        for (uint256 i = 1; i < proposalConfig_.acceptedOptions.length; ++i) {
+        for (uint256 i = 1; i < proposalConfig_.votingWhitelist.length; ++i) {
             require(
                 proposalConfig_.votingWhitelist[i] > proposalConfig_.votingWhitelist[i - 1],
                 "ProposalsState: the voting whitelist is not sorted"
