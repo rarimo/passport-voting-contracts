@@ -123,7 +123,7 @@ describe("Voting", () => {
       const proposalConfig = {
         startTimestamp: await time.latest(),
         duration: 11223344,
-        multichoice: false,
+        multichoice: 0,
         acceptedOptions: [3, 7, 15],
         description: "doesn't really matter",
         votingWhitelist: [await voting.getAddress()],

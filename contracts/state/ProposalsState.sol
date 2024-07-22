@@ -17,6 +17,7 @@ contract ProposalsState is OwnableUpgradeable, TSSUpgradeable {
     using BinSearch for *;
     using DynamicSet for DynamicSet.StringSet;
 
+    uint256 public constant MAXIMUM_OPTIONS = 256;
     uint256 public constant MAXIMUM_CHOICES_PER_OPTION = 8;
 
     enum ProposalStatus {
@@ -33,16 +34,16 @@ contract ProposalsState is OwnableUpgradeable, TSSUpgradeable {
      * The length of the acceptedOptions array is the number of available proposal options and every `1` bit of the array's
      * element indicates the available choices. Only the numbers of (2^n)-1 are accepted. The choices start from 0.
      *
-     * If `multichoice` is set to `true`, users may answer with multiple options at once. Otherwise, only the numbers
-     * of powers of 2 are accepted.
+     * If corresponding `multichoice` bit is set to 1 (starting from the right), users may answer with multiple options at once.
+     * Otherwise, only the numbers of powers of 2 are accepted.
      *
      * The array [3, 7] indicates that there are [0b11, 0b111] -> 2 and 3 choices per options correspondingly available.
      */
     struct ProposalConfig {
         uint64 startTimestamp;
         uint64 duration;
-        bool multichoice;
-        uint256[] acceptedOptions; // maximum `MAXIMUM_CHOICES_PER_OPTION` choices per option
+        uint256 multichoice;
+        uint256[] acceptedOptions;
         string description;
         address[] votingWhitelist; // must be sorted
         bytes[] votingWhitelistData; // data per voting whitelist
@@ -175,7 +176,7 @@ contract ProposalsState is OwnableUpgradeable, TSSUpgradeable {
                 "ProposalsState: vote overflow"
             );
             require(
-                _config.multichoice || (voteChoice - 1) & voteChoice == 0,
+                (_config.multichoice >> i) & 1 > 0 || (voteChoice - 1) & voteChoice == 0,
                 "ProposalsState: vote not a 2^n"
             );
 
@@ -276,8 +277,9 @@ contract ProposalsState is OwnableUpgradeable, TSSUpgradeable {
         require(proposalConfig_.startTimestamp > 0, "ProposalsState: zero start timestamp");
         require(proposalConfig_.duration > 0, "ProposalsState: zero duration");
         require(
-            proposalConfig_.acceptedOptions.length > 0,
-            "ProposalsState: the number of options can't be zero"
+            proposalConfig_.acceptedOptions.length > 0 &&
+                proposalConfig_.acceptedOptions.length <= MAXIMUM_OPTIONS,
+            "ProposalsState: options overflow"
         );
         require(
             proposalConfig_.votingWhitelist.length > 0 &&
