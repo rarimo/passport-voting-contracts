@@ -75,7 +75,7 @@ contract ProposalsState is OwnableUpgradeable, TSSUpgradeable {
     event ProposalCreated(uint256 indexed proposalId, address proposalSMT);
     event ProposalConfigChanged(uint256 indexed proposalId);
     event ProposalHidden(uint256 indexed proposalId, bool hide);
-    event VoteCast(uint256 indexed proposalId, uint256 userNullifier, uint256[] vote);
+    event VoteCast(uint256 indexed proposalId, uint256 indexed userNullifier, uint256[] vote);
 
     modifier onlyVoting() {
         _onlyVoting();
