@@ -1,6 +1,7 @@
 import { Deployer, Reporter } from "@solarity/hardhat-migrate";
+import { deployProxy } from "./helpers/helper";
 
-import { VotingVerifier__factory, Voting__factory, ERC1967Proxy__factory, ProposalsState__factory } from "@ethers-v6";
+import { VotingVerifier__factory, Voting__factory, ProposalsState__factory } from "@ethers-v6";
 
 import { getConfig } from "./config/config";
 
@@ -11,11 +12,7 @@ export = async (deployer: Deployer) => {
 
   const votingVerifier = await deployer.deploy(VotingVerifier__factory);
 
-  let voting = await deployer.deploy(Voting__factory, { name: "Voting" });
-  await deployer.deploy(ERC1967Proxy__factory, [await voting.getAddress(), "0x"], {
-    name: "Voting Proxy",
-  });
-  voting = await deployer.deployed(Voting__factory, "Voting Proxy");
+  const voting = await deployProxy(deployer, Voting__factory, "Voting");
 
   await voting.__Voting_init(
     config.tssSigner,

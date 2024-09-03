@@ -9,6 +9,8 @@ contract RegistrationSMTReplicator is OwnableUpgradeable, TSSUpgradeable {
     string public constant REGISTRATION_ROOT_PREFIX = "Rarimo passport root";
     uint256 public constant ROOT_VALIDITY = 1 hours;
 
+    address public sourceSMT;
+
     bytes32 public latestRoot;
     uint256 public latestTimestamp;
 
@@ -18,10 +20,13 @@ contract RegistrationSMTReplicator is OwnableUpgradeable, TSSUpgradeable {
 
     function __RegistrationSMTReplicator_init(
         address signer_,
+        address sourceSMT_,
         string calldata chainName_
     ) external initializer {
         __Ownable_init();
         __TSSSigner_init(signer_, chainName_);
+
+        sourceSMT = sourceSMT_;
     }
 
     function transitionRoot(
@@ -34,6 +39,7 @@ contract RegistrationSMTReplicator is OwnableUpgradeable, TSSUpgradeable {
         bytes32 leaf_ = keccak256(
             abi.encodePacked(
                 REGISTRATION_ROOT_PREFIX,
+                sourceSMT,
                 address(this),
                 newRoot_,
                 transitionTimestamp_

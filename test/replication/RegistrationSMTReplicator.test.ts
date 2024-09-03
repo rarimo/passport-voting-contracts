@@ -8,6 +8,9 @@ import { Reverter, chainName } from "@/test/helpers";
 
 import { RegistrationSMTReplicator } from "@ethers-v6";
 
+const prefix = "Rarimo passport root";
+const sourceSMT = "0xc1534912902bbe8c54626e2d69288c76a843bc0e";
+
 describe("RegistrationSMTReplicator", () => {
   const reverter = new Reverter();
 
@@ -18,8 +21,8 @@ describe("RegistrationSMTReplicator", () => {
 
   async function transitRoot(root: string, timestamp: number) {
     const leaf = ethers.solidityPackedKeccak256(
-      ["string", "address", "bytes32", "uint256"],
-      ["Rarimo passport root", await replicator.getAddress(), root, timestamp],
+      ["string", "address", "address", "bytes32", "uint256"],
+      [prefix, sourceSMT, await replicator.getAddress(), root, timestamp],
     );
     const signature = ethers.Signature.from(SIGNER.signingKey.sign(leaf)).serialized;
 
@@ -36,7 +39,7 @@ describe("RegistrationSMTReplicator", () => {
     const Replicator = await ethers.getContractFactory("RegistrationSMTReplicator");
     replicator = await Replicator.deploy();
 
-    await replicator.__RegistrationSMTReplicator_init(SIGNER, chainName);
+    await replicator.__RegistrationSMTReplicator_init(SIGNER, sourceSMT, chainName);
 
     await reverter.snapshot();
   });
