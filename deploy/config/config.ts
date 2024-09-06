@@ -5,6 +5,10 @@ export async function getConfig() {
     return await import("./localhost");
   }
 
+  if (hre.network.name == "q-testnet") {
+    return await import("./q-testnet");
+  }
+
   if (hre.network.name == "rarimo-testnet") {
     return await import("./rarimo-testnet");
   }

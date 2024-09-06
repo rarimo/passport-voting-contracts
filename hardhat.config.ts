@@ -44,6 +44,10 @@ const config: HardhatUserConfig = {
       gasPrice: 0,
       gasMultiplier: 1.2,
     },
+    "q-testnet": {
+      url: "https://rpc.qtestnet.org/",
+      accounts: privateKey(),
+    },
     chapel: {
       url: "https://data-seed-prebsc-1-s1.binance.org:8545",
       accounts: privateKey(),
@@ -90,6 +94,7 @@ const config: HardhatUserConfig = {
     apiKey: {
       "rarimo-testnet": "abc",
       "rarimo-mainnet": "abc",
+      "q-testnet": "abc",
       sepolia: `${process.env.ETHERSCAN_KEY}`,
       mainnet: `${process.env.ETHERSCAN_KEY}`,
       bscTestnet: `${process.env.BSCSCAN_KEY}`,
@@ -113,6 +118,14 @@ const config: HardhatUserConfig = {
         urls: {
           apiURL: "https://api.evmscan.rarimo.com/api",
           browserURL: "https://evmscan.rarimo.com",
+        },
+      },
+      {
+        network: "q-testnet",
+        chainId: 35443,
+        urls: {
+          apiURL: "https://explorer.qtestnet.org/api",
+          browserURL: "https://explorer.qtestnet.org",
         },
       },
     ],
