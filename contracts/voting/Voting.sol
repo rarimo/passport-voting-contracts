@@ -78,12 +78,17 @@ contract Voting is OwnableUpgradeable, TSSUpgradeable {
             "Voting: citizenship is not whitelisted"
         );
 
-        // by default we check that the identity is created before the identityCreationTimestampUpperBound (proposal start)
+        /**
+         * By default we check that the identity is created before the identityCreationTimestampUpperBound (proposal start)
+         *
+         * ROOT_VALIDITY is subtracted to address the issue with multiaccounts if they are created right before the voting.
+         * The registration root will still be valid and a user may bring 100 roots to vote 100 times.
+         */
         uint256 identityCreationTimestampUpperBound = proposalRules_
-            .identityCreationTimestampUpperBound;
+            .identityCreationTimestampUpperBound - PoseidonSMT(registrationSMT).ROOT_VALIDITY();
         uint256 identityCounterUpperBound = IDENTITY_LIMIT;
 
-        // if identity is issued after the proposal start, it should not be reissued more than identityCounterUpperBound
+        // If identity is issued after the proposal start, it should not be reissued more than identityCounterUpperBound
         if (userData_.identityCreationTimestamp > 0) {
             identityCreationTimestampUpperBound = userData_.identityCreationTimestamp;
             identityCounterUpperBound = proposalRules_.identityCounterUpperBound;
