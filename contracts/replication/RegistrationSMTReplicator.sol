@@ -34,7 +34,9 @@ contract RegistrationSMTReplicator is OwnableUpgradeable, TSSUpgradeable {
         uint256 transitionTimestamp_,
         bytes calldata proof_
     ) external virtual {
-        require(_roots[newRoot_] == 0, "RSMTR: transitioning to existing root");
+        if (_roots[newRoot_] != 0) {
+            return;
+        }
 
         bytes32 leaf_ = keccak256(
             abi.encodePacked(
@@ -48,15 +50,7 @@ contract RegistrationSMTReplicator is OwnableUpgradeable, TSSUpgradeable {
 
         _checkMerkleSignature(leaf_, proof_);
 
-        if (transitionTimestamp_ > latestTimestamp) {
-            _roots[latestRoot] = transitionTimestamp_;
-
-            (latestRoot, latestTimestamp) = (newRoot_, transitionTimestamp_);
-        } else {
-            _roots[newRoot_] = transitionTimestamp_;
-        }
-
-        emit RootTransitioned(newRoot_, transitionTimestamp_);
+        _updateRoot(newRoot_, transitionTimestamp_);
     }
 
     function isRootValid(bytes32 root_) external view virtual returns (bool) {
@@ -69,6 +63,18 @@ contract RegistrationSMTReplicator is OwnableUpgradeable, TSSUpgradeable {
 
     function isRootLatest(bytes32 root_) public view virtual returns (bool) {
         return root_ == latestRoot;
+    }
+
+    function _updateRoot(bytes32 newRoot_, uint256 transitionTimestamp_) internal virtual {
+        if (transitionTimestamp_ > latestTimestamp) {
+            _roots[latestRoot] = transitionTimestamp_;
+
+            (latestRoot, latestTimestamp) = (newRoot_, transitionTimestamp_);
+        } else {
+            _roots[newRoot_] = transitionTimestamp_;
+        }
+
+        emit RootTransitioned(newRoot_, transitionTimestamp_);
     }
 
     function _authorizeUpgrade(address) internal virtual override onlyOwner {}
