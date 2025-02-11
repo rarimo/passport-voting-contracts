@@ -1,6 +1,6 @@
 {
   "name": "@rarimo/passport-voting-contracts",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "license": "MIT",
   "author": "Zero Block Global Foundation",
   "description": "Decentralized Identity Voting",
