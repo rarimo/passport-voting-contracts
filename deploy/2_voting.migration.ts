@@ -1,7 +1,13 @@
 import { Deployer, Reporter } from "@solarity/hardhat-migrate";
 import { deployProxy } from "./helpers/helper";
 
-import { VotingVerifier__factory, Voting__factory, ProposalsState__factory } from "@ethers-v6";
+import {
+  VotingVerifier__factory,
+  Voting__factory,
+  ProposalsState__factory,
+  BioPassportVoting__factory,
+  BioPassportVotingVerifier__factory,
+} from "@ethers-v6";
 
 import { getConfig } from "./config/config";
 
@@ -24,5 +30,22 @@ export = async (deployer: Deployer) => {
 
   await proposalsState.addVoting(config.votingName, await voting.getAddress());
 
-  Reporter.reportContracts(["Voting", `${await voting.getAddress()}`]);
+  const bioPassportVotingVerifier = await deployer.deploy(BioPassportVotingVerifier__factory);
+
+  const bioPassportVoting = await deployProxy(deployer, BioPassportVoting__factory, "BioPassportVoting");
+
+  await bioPassportVoting.__BioPassportVoting_init(
+    config.tssSigner,
+    config.chainName,
+    config.registrationSMT,
+    await proposalsState.getAddress(),
+    await bioPassportVotingVerifier.getAddress(),
+  );
+
+  await proposalsState.addVoting(config.bioVotingName, await bioPassportVoting.getAddress());
+
+  Reporter.reportContracts(
+    ["Voting", `${await voting.getAddress()}`],
+    ["BioPassportVoting", `${await bioPassportVoting.getAddress()}`],
+  );
 };

@@ -3,8 +3,9 @@ pragma solidity 0.8.16;
 
 import {PoseidonUnit3L} from "@iden3/contracts/lib/Poseidon.sol";
 
-import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import {Address} from "@openzeppelin/contracts/utils/Address.sol";
 import {ERC1967Proxy} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
+import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 
 import {DynamicSet} from "@solarity/solidity-lib/libs/data-structures/DynamicSet.sol";
 
@@ -16,6 +17,8 @@ import {BinSearch} from "../utils/BinSearch.sol";
 contract ProposalsState is OwnableUpgradeable, TSSUpgradeable {
     using BinSearch for *;
     using DynamicSet for DynamicSet.StringSet;
+
+    using Address for address payable;
 
     uint256 public constant MAXIMUM_OPTIONS = 256;
     uint256 public constant MAXIMUM_CHOICES_PER_OPTION = 8;
@@ -108,6 +111,10 @@ contract ProposalsState is OwnableUpgradeable, TSSUpgradeable {
         _proposal.config = proposalConfig_;
 
         emit ProposalCreated(proposalId_, _proposal.proposalSMT, msg.value);
+    }
+
+    function withdrawFunds(address payable recipient_, uint256 amount_) external onlyOwner {
+        recipient_.sendValue(amount_);
     }
 
     function changeProposalConfig(
