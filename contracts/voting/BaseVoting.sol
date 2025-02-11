@@ -4,6 +4,7 @@ pragma solidity 0.8.16;
 import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 
 import {ArrayHelper} from "@solarity/solidity-lib/libs/arrays/ArrayHelper.sol";
+import {VerifierHelper} from "@solarity/solidity-lib/libs/zkp/snarkjs/VerifierHelper.sol";
 
 import {TSSUpgradeable} from "@rarimo/passport-contracts/state/TSSUpgradeable.sol";
 import {Date2Time} from "@rarimo/passport-contracts/utils/Date2Time.sol";
@@ -12,10 +13,16 @@ import {ProposalsState} from "../state/ProposalsState.sol";
 
 import {BinSearch} from "../utils/BinSearch.sol";
 
-contract BaseVoting is OwnableUpgradeable, TSSUpgradeable {
+abstract contract BaseVoting is OwnableUpgradeable, TSSUpgradeable {
     using BinSearch for *;
 
     uint256 public constant ZERO_DATE = 0x303030303030;
+
+    struct UserData {
+        uint256 nullifier;
+        uint256 citizenship;
+        uint256 identityCreationTimestamp;
+    }
 
     struct ProposalRules {
         uint256[] citizenshipWhitelist;
@@ -45,6 +52,15 @@ contract BaseVoting is OwnableUpgradeable, TSSUpgradeable {
         proposalsState = proposalsState_;
         votingVerifier = votingVerifier_;
     }
+
+    function vote(
+        bytes32 registrationRoot_,
+        uint256 currentDate_,
+        uint256 proposalId_,
+        uint256[] memory vote_,
+        UserData memory userData_,
+        VerifierHelper.ProofPoints memory zkPoints_
+    ) external virtual;
 
     function _authorizeUpgrade(address) internal virtual override onlyOwner {}
 

@@ -16,12 +16,6 @@ contract Voting is BaseVoting {
     uint256 public constant IDENTITY_LIMIT = type(uint32).max;
     uint256 public constant SELECTOR = 0x9a21;
 
-    struct UserData {
-        uint256 nullifier;
-        uint256 citizenship;
-        uint256 identityCreationTimestamp;
-    }
-
     function __Voting_init(
         address signer_,
         string calldata chainName_,
@@ -39,7 +33,7 @@ contract Voting is BaseVoting {
         uint256[] memory vote_,
         UserData memory userData_,
         VerifierHelper.ProofPoints memory zkPoints_
-    ) external {
+    ) external override {
         uint256 proposalEventId = ProposalsState(proposalsState).getProposalEventId(proposalId_);
         ProposalRules memory proposalRules_ = _getProposalRules(proposalId_);
 

@@ -17,12 +17,6 @@ contract BioPassportVoting is BaseVoting {
     // FIXME: discuss with a team
     uint256 public constant SELECTOR = 0x1A01; // 0b1101000000001
 
-    struct UserData {
-        uint256 nullifier;
-        uint256 citizenship;
-        uint256 identityCreationTimestamp;
-    }
-
     function __BioPassportVoting_init(
         address signer_,
         string calldata chainName_,
@@ -40,7 +34,7 @@ contract BioPassportVoting is BaseVoting {
         uint256[] memory vote_,
         UserData memory userData_,
         VerifierHelper.ProofPoints memory zkPoints_
-    ) external {
+    ) external override {
         uint256 proposalEventId = ProposalsState(proposalsState).getProposalEventId(proposalId_);
         ProposalRules memory proposalRules_ = _getProposalRules(proposalId_);
 
