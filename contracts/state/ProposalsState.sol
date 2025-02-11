@@ -72,7 +72,7 @@ contract ProposalsState is OwnableUpgradeable, TSSUpgradeable {
 
     mapping(uint256 => Proposal) internal _proposals;
 
-    event ProposalCreated(uint256 indexed proposalId, address proposalSMT);
+    event ProposalCreated(uint256 indexed proposalId, address proposalSMT, uint256 fundAmount);
     event ProposalConfigChanged(uint256 indexed proposalId);
     event ProposalHidden(uint256 indexed proposalId, bool hide);
     event VoteCast(uint256 indexed proposalId, uint256 indexed userNullifier, uint256[] vote);
@@ -93,7 +93,7 @@ contract ProposalsState is OwnableUpgradeable, TSSUpgradeable {
         proposalSMTImpl = proposalSMTImpl_;
     }
 
-    function createProposal(ProposalConfig calldata proposalConfig_) external onlyOwner {
+    function createProposal(ProposalConfig calldata proposalConfig_) external payable {
         _validateProposalConfig(proposalConfig_);
 
         uint256 proposalId_ = ++lastProposalId;
@@ -107,7 +107,7 @@ contract ProposalsState is OwnableUpgradeable, TSSUpgradeable {
         );
         _proposal.config = proposalConfig_;
 
-        emit ProposalCreated(proposalId_, _proposal.proposalSMT);
+        emit ProposalCreated(proposalId_, _proposal.proposalSMT, msg.value);
     }
 
     function changeProposalConfig(
