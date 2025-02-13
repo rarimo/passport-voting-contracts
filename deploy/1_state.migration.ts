@@ -15,6 +15,4 @@ export = async (deployer: Deployer) => {
   const proposalsState = await deployProxy(deployer, ProposalsState__factory, "ProposalsState");
 
   await proposalsState.__ProposalsState_init(config.tssSigner, config.chainName, await proposalSMT.getAddress());
-
-  Reporter.reportContracts(["ProposalsState", `${await proposalsState.getAddress()}`]);
 };

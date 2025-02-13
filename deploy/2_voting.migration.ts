@@ -47,5 +47,6 @@ export = async (deployer: Deployer) => {
   Reporter.reportContracts(
     ["Voting", `${await voting.getAddress()}`],
     ["BioPassportVoting", `${await bioPassportVoting.getAddress()}`],
+    ["ProposalsState", `${await proposalsState.getAddress()}`],
   );
 };
