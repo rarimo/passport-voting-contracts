@@ -76,6 +76,7 @@ contract ProposalsState is OwnableUpgradeable, TSSUpgradeable {
     mapping(uint256 => Proposal) internal _proposals;
 
     event ProposalCreated(uint256 indexed proposalId, address proposalSMT, uint256 fundAmount);
+    event ProposalFunded(uint256 indexed proposalId, uint256 fundAmount);
     event ProposalConfigChanged(uint256 indexed proposalId);
     event ProposalHidden(uint256 indexed proposalId, bool hide);
     event VoteCast(uint256 indexed proposalId, uint256 indexed userNullifier, uint256[] vote);
@@ -115,6 +116,15 @@ contract ProposalsState is OwnableUpgradeable, TSSUpgradeable {
 
     function withdrawFunds(address payable recipient_, uint256 amount_) external onlyOwner {
         recipient_.sendValue(amount_);
+    }
+
+    function addFundsToProposal(uint256 proposalId_) external payable {
+        require(
+            getProposalStatus(proposalId_) != ProposalStatus.None,
+            "ProposalsState: proposal doesn't exist"
+        );
+
+        emit ProposalFunded(proposalId_, msg.value);
     }
 
     function changeProposalConfig(
