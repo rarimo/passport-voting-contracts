@@ -1,17 +1,20 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.16;
 
-import {BinSearch} from "../utils/BinSearch.sol";
-import {ProposalSMT} from "./ProposalSMT.sol";
-import {PoseidonUnit3L} from "@iden3/contracts/lib/Poseidon.sol";
-import {AccessControlUpgradeable} from "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
-import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
-import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
-import {ERC1967Proxy} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
-import {Initializable} from "@openzeppelin/contracts/proxy/utils/Initializable.sol";
-import {UUPSUpgradeable} from "@openzeppelin/contracts/proxy/utils/UUPSUpgradeable.sol";
 import {Address} from "@openzeppelin/contracts/utils/Address.sol";
+import {ERC1967Proxy} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
+import {UUPSUpgradeable} from "@openzeppelin/contracts/proxy/utils/UUPSUpgradeable.sol";
+import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import {AccessControlUpgradeable} from "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
+
+import {PoseidonUnit3L} from "@iden3/contracts/lib/Poseidon.sol";
+
 import {DynamicSet} from "@solarity/solidity-lib/libs/data-structures/DynamicSet.sol";
+
+import {ProposalSMT} from "./ProposalSMT.sol";
+
+import {BinSearch} from "../utils/BinSearch.sol";
 
 contract ProposalsState is OwnableUpgradeable, AccessControlUpgradeable, UUPSUpgradeable {
     using BinSearch for *;
