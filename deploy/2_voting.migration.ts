@@ -40,7 +40,7 @@ export = async (deployer: Deployer) => {
 
   await proposalsState.addVoting(config.bioVotingName, await bioPassportVoting.getAddress());
 
-  Reporter.reportContracts(
+  await Reporter.reportContractsMD(
     ["Voting", `${await voting.getAddress()}`],
     ["BioPassportVoting", `${await bioPassportVoting.getAddress()}`],
     ["ProposalsState", `${await proposalsState.getAddress()}`],

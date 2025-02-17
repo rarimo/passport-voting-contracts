@@ -1,12 +1,9 @@
-# Passport Voting Contracts v1.0.0
+# Passport Voting Contracts
 
 # Stage Contract Addresses
 
-| Index | Contract          | Deployment Block | Address                                                                                                                                     |
-|-------|-------------------|------------------|---------------------------------------------------------------------------------------------------------------------------------------------|
-| 1     | Voting            | -                | [0xc62C52CEd49217D8be61642f880d5832B1a5a5e0](https://newevmscan.mainnet-beta.rarimo.com/address/0xc62C52CEd49217D8be61642f880d5832B1a5a5e0) |
-| 2     | BioPassportVoting | -                | [0xb790df5eC659aE956bA13c108BCbF7bB37477D9c](https://newevmscan.mainnet-beta.rarimo.com/address/0xb790df5eC659aE956bA13c108BCbF7bB37477D9c) |
-| 3     | ProposalState     | -                | [0xB7E47A77eF2FcC35C5F7E7D18462e8bA90a10131](https://newevmscan.mainnet-beta.rarimo.com/address/0xB7E47A77eF2FcC35C5F7E7D18462e8bA90a10131) |
-
-
-
+| Contract          | Address                                                                                                                                     |
+|-------------------|---------------------------------------------------------------------------------------------------------------------------------------------|
+| Voting            | [0x9Dcf8F44d19c0Ea4E5cE779373428C90c52B575a](https://newevmscan.mainnet-beta.rarimo.com/address/0x9Dcf8F44d19c0Ea4E5cE779373428C90c52B575a) |
+| BioPassportVoting | [0x6Dc092F3c1786BCF3f6312952dDf44f13dC363fD](https://newevmscan.mainnet-beta.rarimo.com/address/0x6Dc092F3c1786BCF3f6312952dDf44f13dC363fD) |
+| ProposalsState    | [0x159Bd3Bbdf486bE7bA07f256A47207b3ab4B063c](https://newevmscan.mainnet-beta.rarimo.com/address/0x159Bd3Bbdf486bE7bA07f256A47207b3ab4B063c) |
