@@ -1,20 +1,19 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.16;
 
+import {BinSearch} from "../utils/BinSearch.sol";
+import {ProposalSMT} from "./ProposalSMT.sol";
 import {PoseidonUnit3L} from "@iden3/contracts/lib/Poseidon.sol";
-
-import {Address} from "@openzeppelin/contracts/utils/Address.sol";
-import {ERC1967Proxy} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
+import {AccessControlUpgradeable} from "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
 import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
-
+import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import {ERC1967Proxy} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
+import {Initializable} from "@openzeppelin/contracts/proxy/utils/Initializable.sol";
+import {UUPSUpgradeable} from "@openzeppelin/contracts/proxy/utils/UUPSUpgradeable.sol";
+import {Address} from "@openzeppelin/contracts/utils/Address.sol";
 import {DynamicSet} from "@solarity/solidity-lib/libs/data-structures/DynamicSet.sol";
 
-import {TSSUpgradeable} from "@rarimo/passport-contracts/state/TSSUpgradeable.sol";
-
-import {ProposalSMT} from "./ProposalSMT.sol";
-import {BinSearch} from "../utils/BinSearch.sol";
-
-contract ProposalsState is OwnableUpgradeable, TSSUpgradeable {
+contract ProposalsState is OwnableUpgradeable, AccessControlUpgradeable, UUPSUpgradeable {
     using BinSearch for *;
     using DynamicSet for DynamicSet.StringSet;
 
@@ -22,6 +21,10 @@ contract ProposalsState is OwnableUpgradeable, TSSUpgradeable {
 
     uint256 public constant MAXIMUM_OPTIONS = 256;
     uint256 public constant MAXIMUM_CHOICES_PER_OPTION = 8;
+
+    bytes32 public constant CONTRACT_MANAGER_ROLE = keccak256("CONTRACT_MANAGER_ROLE");
+    bytes32 public constant FUNDS_MANAGER_ROLE = keccak256("FUNDS_MANAGER_ROLE");
+    bytes32 public constant PROPOSAL_MANAGER_ROLE = keccak256("PROPOSAL_MANAGER_ROLE");
 
     enum ProposalStatus {
         None,
@@ -61,6 +64,7 @@ contract ProposalsState is OwnableUpgradeable, TSSUpgradeable {
 
     struct Proposal {
         address proposalSMT;
+        address creator;
         bool hidden;
         mapping(uint256 => mapping(uint256 => uint256)) results; // proposal option => choice => number of votes
         ProposalConfig config;
@@ -73,31 +77,34 @@ contract ProposalsState is OwnableUpgradeable, TSSUpgradeable {
     address public proposalSMTImpl;
     uint256 public lastProposalId;
 
+    uint256 public minFundingAmount;
+
     mapping(uint256 => Proposal) internal _proposals;
 
-    event ProposalCreated(uint256 indexed proposalId, address proposalSMT, uint256 fundAmount);
-    event ProposalFunded(uint256 indexed proposalId, uint256 fundAmount);
+    event MinFundingAmountSet(uint256 amount);
     event ProposalConfigChanged(uint256 indexed proposalId);
     event ProposalHidden(uint256 indexed proposalId, bool hide);
+    event ProposalFunded(uint256 indexed proposalId, uint256 fundAmount);
     event VoteCast(uint256 indexed proposalId, uint256 indexed userNullifier, uint256[] vote);
+    event ProposalCreated(uint256 indexed proposalId, address proposalSMT, uint256 fundAmount);
 
     modifier onlyVoting() {
         _onlyVoting();
         _;
     }
 
-    function __ProposalsState_init(
-        address signer_,
-        string calldata chainName_,
-        address proposalSMTImpl_
-    ) external initializer {
+    function __ProposalsState_init(address proposalSMTImpl_) external initializer {
         __Ownable_init();
-        __TSSSigner_init(signer_, chainName_);
+        __AccessControl_init();
 
         proposalSMTImpl = proposalSMTImpl_;
+
+        _grantRole(DEFAULT_ADMIN_ROLE, _msgSender());
     }
 
     function createProposal(ProposalConfig calldata proposalConfig_) external payable {
+        require(msg.value >= minFundingAmount, "ProposalsState: insufficient funds");
+
         _validateProposalConfig(proposalConfig_);
 
         uint256 proposalId_ = ++lastProposalId;
@@ -110,11 +117,15 @@ contract ProposalsState is OwnableUpgradeable, TSSUpgradeable {
             )
         );
         _proposal.config = proposalConfig_;
+        _proposal.creator = msg.sender;
 
         emit ProposalCreated(proposalId_, _proposal.proposalSMT, msg.value);
     }
 
-    function withdrawFunds(address payable recipient_, uint256 amount_) external onlyOwner {
+    function withdrawFunds(
+        address payable recipient_,
+        uint256 amount_
+    ) external onlyRole(FUNDS_MANAGER_ROLE) {
         recipient_.sendValue(amount_);
     }
 
@@ -127,10 +138,27 @@ contract ProposalsState is OwnableUpgradeable, TSSUpgradeable {
         emit ProposalFunded(proposalId_, msg.value);
     }
 
+    function setMinFundingAmount(uint256 amount_) external onlyRole(FUNDS_MANAGER_ROLE) {
+        minFundingAmount = amount_;
+
+        emit MinFundingAmountSet(amount_);
+    }
+
+    function changeProposalDuration(uint256 proposalId_, uint64 newDuration_) external {
+        require(
+            _msgSender() == _proposals[proposalId_].creator,
+            "ProposalsState: only creator can change the proposal duration"
+        );
+
+        _proposals[proposalId_].config.duration = newDuration_;
+
+        emit ProposalConfigChanged(proposalId_);
+    }
+
     function changeProposalConfig(
         uint256 proposalId_,
         ProposalConfig calldata newProposalConfig_
-    ) external onlyOwner {
+    ) external onlyRole(PROPOSAL_MANAGER_ROLE) {
         require(
             getProposalStatus(proposalId_) != ProposalStatus.None,
             "ProposalsState: proposal doesn't exist"
@@ -142,7 +170,21 @@ contract ProposalsState is OwnableUpgradeable, TSSUpgradeable {
         emit ProposalConfigChanged(proposalId_);
     }
 
-    function hideProposal(uint256 proposalId_, bool hide_) external onlyOwner {
+    function hideProposal(uint256 proposalId_) external {
+        require(
+            _msgSender() == _proposals[proposalId_].creator,
+            "ProposalsState: only creator can hide the proposal"
+        );
+
+        _proposals[proposalId_].hidden = true;
+
+        emit ProposalHidden(proposalId_, true);
+    }
+
+    function hideProposal(
+        uint256 proposalId_,
+        bool hide_
+    ) external onlyRole(PROPOSAL_MANAGER_ROLE) {
         require(
             getProposalStatus(proposalId_) != ProposalStatus.None,
             "ProposalsState: proposal doesn't exist"
@@ -153,11 +195,14 @@ contract ProposalsState is OwnableUpgradeable, TSSUpgradeable {
         emit ProposalHidden(proposalId_, hide_);
     }
 
-    function addVoting(string calldata votingName_, address votingAddress_) external onlyOwner {
+    function addVoting(
+        string calldata votingName_,
+        address votingAddress_
+    ) external onlyRole(PROPOSAL_MANAGER_ROLE) {
         _addVoting(votingName_, votingAddress_);
     }
 
-    function removeVoting(string calldata votingName_) external onlyOwner {
+    function removeVoting(string calldata votingName_) external onlyRole(PROPOSAL_MANAGER_ROLE) {
         _removeVoting(votingName_);
     }
 
@@ -323,7 +368,16 @@ contract ProposalsState is OwnableUpgradeable, TSSUpgradeable {
         }
     }
 
-    function _authorizeUpgrade(address) internal virtual override onlyOwner {}
+    /**
+     * @notice Etherscan compatibility
+     */
+    function implementation() external view virtual returns (address) {
+        return _getImplementation();
+    }
+
+    function _authorizeUpgrade(
+        address
+    ) internal virtual override onlyRole(CONTRACT_MANAGER_ROLE) {}
 
     function _onlyVoting() internal view {
         require(_votingExists[msg.sender], "ProposalsState: not a voting");
