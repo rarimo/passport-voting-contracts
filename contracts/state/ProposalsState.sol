@@ -93,6 +93,11 @@ contract ProposalsState is OwnableUpgradeable, AccessControlUpgradeable, UUPSUpg
         _;
     }
 
+    modifier onlyProposalCreator(uint256 proposalId_) {
+        _onlyProposalCreator(proposalId_);
+        _;
+    }
+
     function __ProposalsState_init(address proposalSMTImpl_) external initializer {
         __Ownable_init();
         __AccessControl_init();
@@ -144,12 +149,10 @@ contract ProposalsState is OwnableUpgradeable, AccessControlUpgradeable, UUPSUpg
         emit MinFundingAmountSet(amount_);
     }
 
-    function changeProposalDuration(uint256 proposalId_, uint64 newDuration_) external {
-        require(
-            _msgSender() == _proposals[proposalId_].creator,
-            "ProposalsState: only creator can change the proposal duration"
-        );
-
+    function changeProposalDuration(
+        uint256 proposalId_,
+        uint64 newDuration_
+    ) external onlyProposalCreator(proposalId_) {
         _proposals[proposalId_].config.duration = newDuration_;
 
         emit ProposalConfigChanged(proposalId_);
@@ -170,12 +173,7 @@ contract ProposalsState is OwnableUpgradeable, AccessControlUpgradeable, UUPSUpg
         emit ProposalConfigChanged(proposalId_);
     }
 
-    function hideProposal(uint256 proposalId_) external {
-        require(
-            _msgSender() == _proposals[proposalId_].creator,
-            "ProposalsState: only creator can hide the proposal"
-        );
-
+    function hideProposal(uint256 proposalId_) external onlyProposalCreator(proposalId_) {
         _proposals[proposalId_].hidden = true;
 
         emit ProposalHidden(proposalId_, true);
@@ -381,5 +379,12 @@ contract ProposalsState is OwnableUpgradeable, AccessControlUpgradeable, UUPSUpg
 
     function _onlyVoting() internal view {
         require(_votingExists[msg.sender], "ProposalsState: not a voting");
+    }
+
+    function _onlyProposalCreator(uint256 proposalId_) internal view {
+        require(
+            _msgSender() == _proposals[proposalId_].creator,
+            "ProposalsState: only proposal creator can call this function"
+        );
     }
 }
