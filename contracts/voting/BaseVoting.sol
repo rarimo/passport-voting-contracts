@@ -4,16 +4,16 @@ pragma solidity 0.8.16;
 import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 
 import {ArrayHelper} from "@solarity/solidity-lib/libs/arrays/ArrayHelper.sol";
+import {UUPSUpgradeable} from "@openzeppelin/contracts/proxy/utils/UUPSUpgradeable.sol";
 import {VerifierHelper} from "@solarity/solidity-lib/libs/zkp/snarkjs/VerifierHelper.sol";
 
-import {TSSUpgradeable} from "@rarimo/passport-contracts/state/TSSUpgradeable.sol";
 import {Date2Time} from "@rarimo/passport-contracts/utils/Date2Time.sol";
 
 import {ProposalsState} from "../state/ProposalsState.sol";
 
 import {BinSearch} from "../utils/BinSearch.sol";
 
-abstract contract BaseVoting is OwnableUpgradeable, TSSUpgradeable {
+abstract contract BaseVoting is OwnableUpgradeable, UUPSUpgradeable {
     using BinSearch for *;
 
     uint256 public constant ZERO_DATE = 0x303030303030;
@@ -38,14 +38,11 @@ abstract contract BaseVoting is OwnableUpgradeable, TSSUpgradeable {
     address public votingVerifier;
 
     function __BaseVoting_init(
-        address signer_,
-        string calldata chainName_,
         address registrationSMT_,
         address proposalsState_,
         address votingVerifier_
     ) internal onlyInitializing {
         __Ownable_init();
-        __TSSSigner_init(signer_, chainName_);
 
         registrationSMT = registrationSMT_;
 
@@ -61,8 +58,6 @@ abstract contract BaseVoting is OwnableUpgradeable, TSSUpgradeable {
         UserData memory userData_,
         VerifierHelper.ProofPoints memory zkPoints_
     ) external virtual;
-
-    function _authorizeUpgrade(address) internal virtual override onlyOwner {}
 
     function _getProposalRules(
         uint256 proposalId_
@@ -113,4 +108,13 @@ abstract contract BaseVoting is OwnableUpgradeable, TSSUpgradeable {
 
         return false;
     }
+
+    /**
+     * @notice Etherscan compatibility
+     */
+    function implementation() external view virtual returns (address) {
+        return _getImplementation();
+    }
+
+    function _authorizeUpgrade(address) internal virtual override onlyOwner {}
 }

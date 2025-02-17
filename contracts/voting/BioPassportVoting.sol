@@ -18,13 +18,11 @@ contract BioPassportVoting is BaseVoting {
     uint256 public constant SELECTOR = 0x1A01; // 0b1101000000001
 
     function __BioPassportVoting_init(
-        address signer_,
-        string calldata chainName_,
         address registrationSMT_,
         address proposalsState_,
         address votingVerifier_
     ) external initializer {
-        __BaseVoting_init(signer_, chainName_, registrationSMT_, proposalsState_, votingVerifier_);
+        __BaseVoting_init(registrationSMT_, proposalsState_, votingVerifier_);
     }
 
     function vote(

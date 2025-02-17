@@ -17,13 +17,11 @@ contract Voting is BaseVoting {
     uint256 public constant SELECTOR = 0x9a21;
 
     function __Voting_init(
-        address signer_,
-        string calldata chainName_,
         address registrationSMT_,
         address proposalsState_,
         address votingVerifier_
     ) external initializer {
-        __BaseVoting_init(signer_, chainName_, registrationSMT_, proposalsState_, votingVerifier_);
+        __BaseVoting_init(registrationSMT_, proposalsState_, votingVerifier_);
     }
 
     function vote(

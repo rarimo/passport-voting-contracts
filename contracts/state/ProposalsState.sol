@@ -108,6 +108,9 @@ contract ProposalsState is OwnableUpgradeable, AccessControlUpgradeable, UUPSUpg
         proposalSMTImpl = proposalSMTImpl_;
 
         _grantRole(DEFAULT_ADMIN_ROLE, _msgSender());
+        _grantRole(CONTRACT_MANAGER_ROLE, _msgSender());
+        _grantRole(FUNDS_MANAGER_ROLE, _msgSender());
+        _grantRole(PROPOSAL_MANAGER_ROLE, _msgSender());
     }
 
     function createProposal(ProposalConfig calldata proposalConfig_) external payable {
