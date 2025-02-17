@@ -21,8 +21,6 @@ export = async (deployer: Deployer) => {
   const voting = await deployProxy(deployer, Voting__factory, "Voting");
 
   await voting.__Voting_init(
-    config.tssSigner,
-    config.chainName,
     config.registrationSMT,
     await proposalsState.getAddress(),
     await votingVerifier.getAddress(),
@@ -35,8 +33,6 @@ export = async (deployer: Deployer) => {
   const bioPassportVoting = await deployProxy(deployer, BioPassportVoting__factory, "BioPassportVoting");
 
   await bioPassportVoting.__BioPassportVoting_init(
-    config.tssSigner,
-    config.chainName,
     config.registrationSMT,
     await proposalsState.getAddress(),
     await bioPassportVotingVerifier.getAddress(),
