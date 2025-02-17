@@ -101,11 +101,16 @@ contract ProposalsState is OwnableUpgradeable, AccessControlUpgradeable, UUPSUpg
         _;
     }
 
-    function __ProposalsState_init(address proposalSMTImpl_) external initializer {
+    function __ProposalsState_init(
+        address proposalSMTImpl_,
+        uint256 minFundingAmount_
+    ) external initializer {
         __Ownable_init();
         __AccessControl_init();
 
         proposalSMTImpl = proposalSMTImpl_;
+
+        minFundingAmount = minFundingAmount_;
 
         _grantRole(DEFAULT_ADMIN_ROLE, _msgSender());
         _grantRole(CONTRACT_MANAGER_ROLE, _msgSender());
@@ -159,7 +164,14 @@ contract ProposalsState is OwnableUpgradeable, AccessControlUpgradeable, UUPSUpg
         uint256 proposalId_,
         uint64 newDuration_
     ) external onlyProposalCreator(proposalId_) {
-        _proposals[proposalId_].config.duration = newDuration_;
+        ProposalConfig storage _config = _proposals[proposalId_].config;
+
+        require(
+            block.timestamp < _config.startTimestamp + _config.duration,
+            "ProposalsState: proposal ended"
+        );
+
+        _config.duration = newDuration_;
 
         emit ProposalConfigChanged(proposalId_);
     }
