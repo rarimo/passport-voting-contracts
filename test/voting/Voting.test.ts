@@ -39,7 +39,7 @@ describe("Voting", () => {
     let proxy = await Proxy.deploy(await proposalsState.getAddress(), "0x");
     proposalsState = proposalsState.attach(await proxy.getAddress()) as ProposalsState;
 
-    await proposalsState.__ProposalsState_init(await proposalSMT.getAddress());
+    await proposalsState.__ProposalsState_init(await proposalSMT.getAddress(), 0n);
   }
 
   async function deployVoting() {
