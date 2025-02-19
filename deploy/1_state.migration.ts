@@ -14,5 +14,5 @@ export = async (deployer: Deployer) => {
 
   const proposalsState = await deployProxy(deployer, ProposalsState__factory, "ProposalsState");
 
-  await proposalsState.__ProposalsState_init(await proposalSMT.getAddress(), 0n);
+  await proposalsState.__ProposalsState_init(await proposalSMT.getAddress(), config.minFundingAmount);
 };
