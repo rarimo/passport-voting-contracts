@@ -167,8 +167,9 @@ contract ProposalsState is OwnableUpgradeable, AccessControlUpgradeable, UUPSUpg
         ProposalConfig storage _config = _proposals[proposalId_].config;
 
         require(
-            block.timestamp < _config.startTimestamp + _config.duration,
-            "ProposalsState: proposal ended"
+            getProposalStatus(proposalId_) == ProposalStatus.Waiting ||
+                getProposalStatus(proposalId_) == ProposalStatus.Started,
+            "ProposalsState: cannot change duration if proposal is not waiting or started"
         );
 
         _config.duration = newDuration_;
