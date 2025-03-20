@@ -47,7 +47,6 @@
     "@openzeppelin/contracts": "4.9.6",
     "@openzeppelin/contracts-upgradeable": "4.9.6",
     "@rarimo/passport-contracts": "0.1.2",
-    "@iden3/contracts": "1.4.7",
     "@solarity/solidity-lib": "2.7.10"
   },
   "devDependencies": {
@@ -58,13 +57,12 @@
     "@nomicfoundation/hardhat-network-helpers": "^1.0.10",
     "@solarity/hardhat-gobind": "^1.2.2",
     "@solarity/hardhat-markup": "^1.0.7",
-    "@solarity/hardhat-migrate": "^2.1.11",
+    "@solarity/hardhat-migrate": "^3.0.0",
     "@typechain/ethers-v6": "^0.5.1",
     "@typechain/hardhat": "^9.1.0",
     "@types/chai": "^4.3.14",
     "@types/mocha": "^10.0.6",
     "@types/node": "^18.16.0",
-    "bignumber.js": "^9.1.2",
     "chai": "^4.4.1",
     "circomlibjs": "^0.1.7",
     "dotenv": "^16.4.5",

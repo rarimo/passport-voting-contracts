@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.16;
+pragma solidity 0.8.28;
 
 import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 
@@ -36,6 +36,8 @@ abstract contract BaseVoting is OwnableUpgradeable, UUPSUpgradeable {
 
     address public proposalsState;
     address public votingVerifier;
+
+    error InvalidZKProof(uint256[] pubSignals_);
 
     function __BaseVoting_init(
         address registrationSMT_,

@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.16;
+pragma solidity 0.8.28;
 
 import {VerifierHelper} from "@solarity/solidity-lib/libs/zkp/snarkjs/VerifierHelper.sol";
 
-import {PoseidonSMT} from "@rarimo/passport-contracts/state/PoseidonSMT.sol";
+import {IPoseidonSMT} from "../interfaces/IPoseidonSMT.sol";
 
 import {BaseVoting} from "./BaseVoting.sol";
 
@@ -37,7 +37,7 @@ contract BioPassportVoting is BaseVoting {
         ProposalRules memory proposalRules_ = _getProposalRules(proposalId_);
 
         require(
-            PoseidonSMT(registrationSMT).isRootValid(registrationRoot_),
+            IPoseidonSMT(registrationSMT).isRootValid(registrationRoot_),
             "Voting: registration root is not valid"
         );
         require(_validateDate(currentDate_), "Voting: date too far");
@@ -53,7 +53,7 @@ contract BioPassportVoting is BaseVoting {
          * The registration root will still be valid and a user may bring 100 roots to vote 100 times.
          */
         uint256 identityCreationTimestampUpperBound = proposalRules_
-            .identityCreationTimestampUpperBound - PoseidonSMT(registrationSMT).ROOT_VALIDITY();
+            .identityCreationTimestampUpperBound - IPoseidonSMT(registrationSMT).ROOT_VALIDITY();
         uint256 identityCounterUpperBound = IDENTITY_LIMIT;
 
         // If identity is issued after the proposal start, it should not be reissued more than identityCounterUpperBound
@@ -78,7 +78,7 @@ contract BioPassportVoting is BaseVoting {
         pubSignals_[20] = proposalRules_.expirationDateLowerBound; // input, expirationDateLowerbound
         pubSignals_[21] = ZERO_DATE; // input, expirationDateUpperbound
 
-        require(votingVerifier.verifyProof(pubSignals_, zkPoints_), "Voting: invalid zk proof");
+        require(votingVerifier.verifyProof(pubSignals_, zkPoints_), InvalidZKProof(pubSignals_));
 
         ProposalsState(proposalsState).vote(proposalId_, userData_.nullifier, vote_);
     }

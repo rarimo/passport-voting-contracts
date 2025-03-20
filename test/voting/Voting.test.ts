@@ -44,12 +44,7 @@ describe("Voting", () => {
 
   async function deployVoting() {
     const Proxy = await ethers.getContractFactory("ERC1967Proxy");
-    const RegistrationSMTMock = await ethers.getContractFactory("RegistrationSMTMock", {
-      libraries: {
-        PoseidonUnit2L: await (await getPoseidon(2)).getAddress(),
-        PoseidonUnit3L: await (await getPoseidon(3)).getAddress(),
-      },
-    });
+    const RegistrationSMTMock = await ethers.getContractFactory("RegistrationSMTMock");
     const VerifierMock = await ethers.getContractFactory("VerifierMock");
     const Voting = await ethers.getContractFactory("Voting");
 
