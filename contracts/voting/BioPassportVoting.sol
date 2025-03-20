@@ -14,8 +14,7 @@ contract BioPassportVoting is BaseVoting {
 
     uint256 public constant PROOF_SIGNALS_COUNT = 23;
     uint256 public constant IDENTITY_LIMIT = type(uint32).max;
-    // FIXME: discuss with a team
-    uint256 public constant SELECTOR = 0x1A01; // 0b1101000000001
+    uint256 public constant SELECTOR = 0x9A21;
 
     function __BioPassportVoting_init(
         address registrationSMT_,
@@ -65,7 +64,7 @@ contract BioPassportVoting is BaseVoting {
         uint256[] memory pubSignals_ = new uint256[](PROOF_SIGNALS_COUNT);
 
         pubSignals_[0] = userData_.nullifier; // output, nullifier
-        pubSignals_[4] = userData_.citizenship;
+        pubSignals_[6] = userData_.citizenship;
         pubSignals_[9] = proposalEventId; // input, eventId
         pubSignals_[10] = uint248(uint256(keccak256(abi.encode(vote_)))); // input, eventData
         pubSignals_[11] = uint256(registrationRoot_); // input, idStateRoot
