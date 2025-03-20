@@ -47,7 +47,8 @@
     "@openzeppelin/contracts": "4.9.6",
     "@openzeppelin/contracts-upgradeable": "4.9.6",
     "@rarimo/passport-contracts": "0.1.2",
-    "@solarity/solidity-lib": "2.7.10"
+    "@solarity/solidity-lib": "2.7.10",
+    "poseidon-solidity": "^0.0.5"
   },
   "devDependencies": {
     "@iden3/js-crypto": "^1.0.3",

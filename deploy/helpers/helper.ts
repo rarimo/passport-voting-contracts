@@ -1,9 +1,4 @@
 import { Deployer } from "@solarity/hardhat-migrate";
-import { EthersContract } from "@solarity/hardhat-migrate/dist/src/types/adapter";
-
-import { BaseContract } from "ethers";
-
-import { ERC1967Proxy__factory } from "@/generated-types/ethers";
 
 const { poseidonContract } = require("circomlibjs");
 
@@ -28,18 +23,4 @@ export async function deployPoseidons(deployer: Deployer, poseidonSizeParams: nu
   for (const size of poseidonSizeParams) {
     await deployPoseidon(size);
   }
-}
-
-export async function deployProxy<T, I = BaseContract>(
-  deployer: Deployer,
-  factory: EthersContract<T, I>,
-  name: string,
-) {
-  const implementation = (await deployer.deploy(factory, { name: name })) as BaseContract;
-
-  await deployer.deploy(ERC1967Proxy__factory, [await implementation.getAddress(), "0x"], {
-    name: `${name} Proxy`,
-  });
-
-  return await deployer.deployed(factory, `${name} Proxy`);
 }
