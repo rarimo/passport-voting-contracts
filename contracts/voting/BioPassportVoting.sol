@@ -14,7 +14,6 @@ contract BioPassportVoting is BaseVoting {
 
     uint256 public constant PROOF_SIGNALS_COUNT = 23;
     uint256 public constant IDENTITY_LIMIT = type(uint32).max;
-    uint256 public constant SELECTOR = 0x9A21;
 
     function __BioPassportVoting_init(
         address registrationSMT_,
@@ -64,15 +63,16 @@ contract BioPassportVoting is BaseVoting {
         uint256[] memory pubSignals_ = new uint256[](PROOF_SIGNALS_COUNT);
 
         pubSignals_[0] = userData_.nullifier; // output, nullifier
-        pubSignals_[6] = userData_.citizenship;
+        pubSignals_[6] = userData_.citizenship; // input, citizenship
+        pubSignals_[7] = proposalRules_.sex; // input, sex
         pubSignals_[9] = proposalEventId; // input, eventId
         pubSignals_[10] = uint248(uint256(keccak256(abi.encode(vote_)))); // input, eventData
         pubSignals_[11] = uint256(registrationRoot_); // input, idStateRoot
-        pubSignals_[12] = SELECTOR; // input, selector
+        pubSignals_[12] = proposalRules_.selector; // input, selector
         pubSignals_[13] = currentDate_; // input, currentDate
         pubSignals_[15] = identityCreationTimestampUpperBound; // input, timestampUpperbound
         pubSignals_[17] = identityCounterUpperBound; // input, identityCounterUpperbound
-        pubSignals_[18] = ZERO_DATE; // input, birthDateLowerbound
+        pubSignals_[18] = proposalRules_.birthDateLowerbound; // input, birthDateLowerbound
         pubSignals_[19] = proposalRules_.birthDateUpperbound; // input, birthDateUpperbound
         pubSignals_[20] = proposalRules_.expirationDateLowerBound; // input, expirationDateLowerbound
         pubSignals_[21] = ZERO_DATE; // input, expirationDateUpperbound

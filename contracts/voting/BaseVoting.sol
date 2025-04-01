@@ -25,9 +25,12 @@ abstract contract BaseVoting is OwnableUpgradeable, UUPSUpgradeable {
     }
 
     struct ProposalRules {
+        uint256 selector;
         uint256[] citizenshipWhitelist;
         uint256 identityCreationTimestampUpperBound;
         uint256 identityCounterUpperBound;
+        uint256 sex;
+        uint256 birthDateLowerbound;
         uint256 birthDateUpperbound;
         uint256 expirationDateLowerBound;
     }
