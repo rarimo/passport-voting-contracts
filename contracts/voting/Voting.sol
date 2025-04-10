@@ -64,15 +64,16 @@ contract Voting is BaseVoting {
         uint256[] memory pubSignals_ = new uint256[](PROOF_SIGNALS_COUNT);
 
         pubSignals_[0] = userData_.nullifier; // output, nullifier
-        pubSignals_[5] = userData_.citizenship;
+        pubSignals_[5] = userData_.citizenship; // input, citizenship
+        pubSignals_[6] = proposalRules_.sex; // input, sex
         pubSignals_[10] = proposalEventId; // input, eventId
         pubSignals_[11] = uint248(uint256(keccak256(abi.encode(vote_)))); // input, eventData
         pubSignals_[12] = uint256(registrationRoot_); // input, idStateRoot
-        pubSignals_[13] = SELECTOR; // input, selector
+        pubSignals_[13] = proposalRules_.selector; // input, selector
         pubSignals_[14] = currentDate_; // input, currentDate
         pubSignals_[16] = identityCreationTimestampUpperBound; // input, timestampUpperbound
         pubSignals_[18] = identityCounterUpperBound; // input, identityCounterUpperbound
-        pubSignals_[19] = ZERO_DATE; // input, birthDateLowerbound
+        pubSignals_[19] = proposalRules_.birthDateLowerbound; // input, birthDateLowerbound
         pubSignals_[20] = proposalRules_.birthDateUpperbound; // input, birthDateUpperbound
         pubSignals_[21] = proposalRules_.expirationDateLowerBound; // input, expirationDateLowerbound
         pubSignals_[22] = ZERO_DATE; // input, expirationDateUpperbound
