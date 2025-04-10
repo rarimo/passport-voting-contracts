@@ -48,7 +48,7 @@
     "@openzeppelin/contracts-upgradeable": "4.9.6",
     "@rarimo/passport-contracts": "0.1.2",
     "@solarity/solidity-lib": "2.7.10",
-    "poseidon-solidity": "^0.0.5"
+    "poseidon-solidity": "0.0.5"
   },
   "devDependencies": {
     "@iden3/js-crypto": "^1.0.3",
@@ -58,7 +58,7 @@
     "@nomicfoundation/hardhat-network-helpers": "^1.0.10",
     "@solarity/hardhat-gobind": "^1.2.2",
     "@solarity/hardhat-markup": "^1.0.7",
-    "@solarity/hardhat-migrate": "^3.0.0",
+    "@solarity/hardhat-migrate": "^3.0.2",
     "@typechain/ethers-v6": "^0.5.1",
     "@typechain/hardhat": "^9.1.0",
     "@types/chai": "^4.3.14",
