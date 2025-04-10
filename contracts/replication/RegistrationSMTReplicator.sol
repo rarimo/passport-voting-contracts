@@ -1,54 +1,38 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.16;
+pragma solidity 0.8.28;
 
+import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 
-import {TSSUpgradeable} from "@rarimo/passport-contracts/state/TSSUpgradeable.sol";
+import {TypeCaster} from "@solarity/solidity-lib/libs/utils/TypeCaster.sol";
+import {MultiOwnable} from "@solarity/solidity-lib/access/MultiOwnable.sol";
 
-contract RegistrationSMTReplicator is OwnableUpgradeable, TSSUpgradeable {
-    string public constant REGISTRATION_ROOT_PREFIX = "Rarimo passport root";
+contract RegistrationSMTReplicator is MultiOwnable, UUPSUpgradeable {
+    using TypeCaster for *;
+
     uint256 public constant ROOT_VALIDITY = 1 hours;
-
-    address public sourceSMT;
 
     bytes32 public latestRoot;
     uint256 public latestTimestamp;
 
-    mapping(bytes32 => uint256) internal _roots; // root => transition timestamp
+    mapping(bytes32 root => uint256 transitionTimestamp) internal _roots;
 
     event RootTransitioned(bytes32 newRoot, uint256 transitionTimestamp);
 
-    function __RegistrationSMTReplicator_init(
-        address signer_,
-        address sourceSMT_,
-        string calldata chainName_
-    ) external initializer {
-        __Ownable_init();
-        __TSSSigner_init(signer_, chainName_);
+    function __RegistrationSMTReplicator_init(address signer_) external initializer {
+        __MultiOwnable_init();
 
-        sourceSMT = sourceSMT_;
+        addOwners(signer_.asSingletonArray());
     }
 
     function transitionRoot(
         bytes32 newRoot_,
         uint256 transitionTimestamp_,
         bytes calldata proof_
-    ) external virtual {
+    ) external virtual onlyOwner {
         if (_roots[newRoot_] != 0) {
             return;
         }
-
-        bytes32 leaf_ = keccak256(
-            abi.encodePacked(
-                REGISTRATION_ROOT_PREFIX,
-                sourceSMT,
-                address(this),
-                newRoot_,
-                transitionTimestamp_
-            )
-        );
-
-        _checkMerkleSignature(leaf_, proof_);
 
         _updateRoot(newRoot_, transitionTimestamp_);
     }
@@ -78,4 +62,8 @@ contract RegistrationSMTReplicator is OwnableUpgradeable, TSSUpgradeable {
     }
 
     function _authorizeUpgrade(address) internal virtual override onlyOwner {}
+
+    function implementation() external view virtual returns (address) {
+        return _getImplementation();
+    }
 }

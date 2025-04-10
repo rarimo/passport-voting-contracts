@@ -1,3 +1,4 @@
+import "@nomicfoundation/hardhat-verify";
 import "@nomicfoundation/hardhat-ethers";
 import "@nomicfoundation/hardhat-chai-matchers";
 import "@solarity/hardhat-migrate";
@@ -82,7 +83,7 @@ const config: HardhatUserConfig = {
     },
   },
   solidity: {
-    version: "0.8.16",
+    version: "0.8.28",
     settings: {
       optimizer: {
         enabled: true,
@@ -131,7 +132,9 @@ const config: HardhatUserConfig = {
     ],
   },
   migrate: {
-    pathToMigrations: "./deploy/",
+    paths: {
+      pathToMigrations: "./deploy/",
+    },
   },
   mocha: {
     timeout: 1000000,

@@ -1,5 +1,4 @@
 import { Deployer, Reporter } from "@solarity/hardhat-migrate";
-import { deployProxy } from "./helpers/helper";
 
 import {
   VotingVerifier__factory,
@@ -14,11 +13,11 @@ import { getConfig } from "./config/config";
 export = async (deployer: Deployer) => {
   const config = (await getConfig())!;
 
-  const proposalsState = await deployer.deployed(ProposalsState__factory, "ProposalsState Proxy");
+  const proposalsState = await deployer.deployed(ProposalsState__factory);
 
   const votingVerifier = await deployer.deploy(VotingVerifier__factory);
 
-  const voting = await deployProxy(deployer, Voting__factory, "Voting");
+  const voting = await deployer.deployERC1967Proxy(Voting__factory);
 
   await voting.__Voting_init(
     config.registrationSMT,
@@ -30,7 +29,7 @@ export = async (deployer: Deployer) => {
 
   const bioPassportVotingVerifier = await deployer.deploy(BioPassportVotingVerifier__factory);
 
-  const bioPassportVoting = await deployProxy(deployer, BioPassportVoting__factory, "BioPassportVoting");
+  const bioPassportVoting = await deployer.deployERC1967Proxy(BioPassportVoting__factory);
 
   await bioPassportVoting.__BioPassportVoting_init(
     config.registrationSMT,

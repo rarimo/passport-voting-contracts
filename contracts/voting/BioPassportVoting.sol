@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.16;
+pragma solidity 0.8.28;
 
 import {VerifierHelper} from "@solarity/solidity-lib/libs/zkp/snarkjs/VerifierHelper.sol";
 
-import {PoseidonSMT} from "@rarimo/passport-contracts/state/PoseidonSMT.sol";
+import {IPoseidonSMT} from "../interfaces/IPoseidonSMT.sol";
 
 import {BaseVoting} from "./BaseVoting.sol";
 
@@ -14,8 +14,6 @@ contract BioPassportVoting is BaseVoting {
 
     uint256 public constant PROOF_SIGNALS_COUNT = 23;
     uint256 public constant IDENTITY_LIMIT = type(uint32).max;
-    // FIXME: discuss with a team
-    uint256 public constant SELECTOR = 0x1A01; // 0b1101000000001
 
     function __BioPassportVoting_init(
         address registrationSMT_,
@@ -37,7 +35,7 @@ contract BioPassportVoting is BaseVoting {
         ProposalRules memory proposalRules_ = _getProposalRules(proposalId_);
 
         require(
-            PoseidonSMT(registrationSMT).isRootValid(registrationRoot_),
+            IPoseidonSMT(registrationSMT).isRootValid(registrationRoot_),
             "Voting: registration root is not valid"
         );
         require(_validateDate(currentDate_), "Voting: date too far");
@@ -53,7 +51,7 @@ contract BioPassportVoting is BaseVoting {
          * The registration root will still be valid and a user may bring 100 roots to vote 100 times.
          */
         uint256 identityCreationTimestampUpperBound = proposalRules_
-            .identityCreationTimestampUpperBound - PoseidonSMT(registrationSMT).ROOT_VALIDITY();
+            .identityCreationTimestampUpperBound - IPoseidonSMT(registrationSMT).ROOT_VALIDITY();
         uint256 identityCounterUpperBound = IDENTITY_LIMIT;
 
         // If identity is issued after the proposal start, it should not be reissued more than identityCounterUpperBound
@@ -65,20 +63,21 @@ contract BioPassportVoting is BaseVoting {
         uint256[] memory pubSignals_ = new uint256[](PROOF_SIGNALS_COUNT);
 
         pubSignals_[0] = userData_.nullifier; // output, nullifier
-        pubSignals_[4] = userData_.citizenship;
+        pubSignals_[6] = userData_.citizenship; // input, citizenship
+        pubSignals_[7] = proposalRules_.sex; // input, sex
         pubSignals_[9] = proposalEventId; // input, eventId
         pubSignals_[10] = uint248(uint256(keccak256(abi.encode(vote_)))); // input, eventData
         pubSignals_[11] = uint256(registrationRoot_); // input, idStateRoot
-        pubSignals_[12] = SELECTOR; // input, selector
+        pubSignals_[12] = proposalRules_.selector; // input, selector
         pubSignals_[13] = currentDate_; // input, currentDate
         pubSignals_[15] = identityCreationTimestampUpperBound; // input, timestampUpperbound
         pubSignals_[17] = identityCounterUpperBound; // input, identityCounterUpperbound
-        pubSignals_[18] = ZERO_DATE; // input, birthDateLowerbound
+        pubSignals_[18] = proposalRules_.birthDateLowerbound; // input, birthDateLowerbound
         pubSignals_[19] = proposalRules_.birthDateUpperbound; // input, birthDateUpperbound
         pubSignals_[20] = proposalRules_.expirationDateLowerBound; // input, expirationDateLowerbound
         pubSignals_[21] = ZERO_DATE; // input, expirationDateUpperbound
 
-        require(votingVerifier.verifyProof(pubSignals_, zkPoints_), "Voting: invalid zk proof");
+        require(votingVerifier.verifyProof(pubSignals_, zkPoints_), InvalidZKProof(pubSignals_));
 
         ProposalsState(proposalsState).vote(proposalId_, userData_.nullifier, vote_);
     }

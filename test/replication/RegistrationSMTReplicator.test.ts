@@ -39,7 +39,7 @@ describe("RegistrationSMTReplicator", () => {
     const Replicator = await ethers.getContractFactory("RegistrationSMTReplicator");
     replicator = await Replicator.deploy();
 
-    await replicator.__RegistrationSMTReplicator_init(SIGNER, sourceSMT, chainName);
+    await replicator.__RegistrationSMTReplicator_init(SIGNER);
 
     await reverter.snapshot();
   });
