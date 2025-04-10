@@ -6,7 +6,7 @@ import { expect } from "chai";
 
 import { Reverter, getPoseidon, chainName, votingName } from "@/test/helpers";
 
-import { VerifierHelper } from "@/generated-types/ethers/contracts/voting/Voting";
+import { BaseVoting, VerifierHelper } from "@/generated-types/ethers/contracts/voting/Voting";
 
 import { ProposalsState, Voting } from "@ethers-v6";
 
@@ -81,8 +81,8 @@ describe("Voting", () => {
     const coder = ethers.AbiCoder.defaultAbiCoder();
 
     return coder.encode(
-      ["tuple(uint256[],uint256,uint256,uint256,uint256)"],
-      [[[0x554b52, 0x47454f], 1721401330, 1, 0x303630373139, 0x323430373139]],
+      ["tuple(uint256,uint256[],uint256,uint256,uint256,uint256,uint256,uint256)"],
+      [[0x00, [0x554b52, 0x47454f], 1721401330, 1, 0x00, 0x303030303030, 0x303630373139, 0x323430373139]],
     );
   }
 
@@ -113,7 +113,7 @@ describe("Voting", () => {
 
   describe("#vote", () => {
     it("should vote", async () => {
-      const proposalConfig = {
+      const proposalConfig: ProposalsState.ProposalConfigStruct = {
         startTimestamp: await time.latest(),
         duration: 11223344,
         multichoice: 0,
@@ -125,7 +125,7 @@ describe("Voting", () => {
 
       await proposalsState.createProposal(proposalConfig);
 
-      const userData = {
+      const userData: BaseVoting.UserDataStruct = {
         nullifier: ethers.hexlify(ethers.randomBytes(31)),
         citizenship: 0x554b52,
         identityCreationTimestamp: 123456,
