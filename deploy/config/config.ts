@@ -13,12 +13,12 @@ export async function getConfig() {
     return await import("./q-testnet");
   }
 
-  if (hre.network.name == "rarimo-testnet") {
-    return await import("./rarimo-testnet");
+  if (hre.network.name == "rarimo-l2") {
+    return await import("./rarimo-l2");
   }
 
   if (hre.network.name == "rarimo-mainnet") {
-    return await import("./rarimo-mainnet");
+    return await import("./rarimo-beta");
   }
 
   throw new Error(`Config for network ${hre.network.name} is not specified`);
