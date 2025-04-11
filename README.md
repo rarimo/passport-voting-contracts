@@ -26,6 +26,16 @@ Afterwards, you will be able to create polls via `ProposalsState` and vote on th
 > [!NOTE]
 > This is experimental, state of the art software. Behold and use at your own risk.
 
+### How to prove uniqueness
+
+Select a column from the table depending on the time of passport registration relative to voting start:
+
+| Parameters | Before voting start | After voting start |
+| ---------- | -------- | ------- |
+| pubSignals.identityCounter             | uint32 max   | proposalRules_.identityCounterUpperBound |
+| pubSignals.identityTimestampUpperbound | proposalRules_.identityCreationTimestampUpperBound - 1 hour | userData_.identityCreationTimestamp |
+| userData_.identityCreationTimestamp    | 0    | uint64 max - 1 |
+
 ## License
 
 The smart contracts are released under the MIT License.
