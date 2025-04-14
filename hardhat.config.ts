@@ -48,7 +48,6 @@ const config: HardhatUserConfig = {
       gasPrice: 0,
       gasMultiplier: 1.2,
     },
-
     "q-testnet": {
       url: "https://rpc.qtestnet.org/",
       accounts: privateKey(),
@@ -65,6 +64,7 @@ const config: HardhatUserConfig = {
   },
   etherscan: {
     apiKey: {
+      sepolia: `${process.env.ETHERSCAN_KEY}`,
       "rarimo-l2": "abc",
       "rarimo-beta": "abc",
       "q-testnet": "abc",
