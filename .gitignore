@@ -13,3 +13,6 @@ generated-types
 
 # Hardhat migrate
 .storage.json
+
+
+deploy/dep-*

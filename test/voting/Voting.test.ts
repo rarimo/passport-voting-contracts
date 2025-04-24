@@ -1,14 +1,15 @@
+import { expect } from "chai";
 import { ethers } from "hardhat";
 import { HDNodeWallet } from "ethers";
+
 import { time } from "@nomicfoundation/hardhat-network-helpers";
 import { SignerWithAddress } from "@nomicfoundation/hardhat-ethers/signers";
-import { expect } from "chai";
 
-import { Reverter, getPoseidon, chainName, votingName } from "@/test/helpers";
+import { Reverter, getPoseidon, votingName } from "@/test/helpers";
 
 import { BaseVoting, VerifierHelper } from "@/generated-types/ethers/contracts/voting/Voting";
 
-import { ProposalsState, Voting } from "@ethers-v6";
+import { BioPassportVoting, ProposalsState } from "@ethers-v6";
 
 describe("Voting", () => {
   const reverter = new Reverter();
@@ -16,7 +17,7 @@ describe("Voting", () => {
   let OWNER: SignerWithAddress;
   let SIGNER: HDNodeWallet;
 
-  let voting: Voting;
+  let voting: BioPassportVoting;
   let proposalsState: ProposalsState;
 
   async function deployState() {
@@ -46,7 +47,7 @@ describe("Voting", () => {
     const Proxy = await ethers.getContractFactory("ERC1967Proxy");
     const RegistrationSMTMock = await ethers.getContractFactory("RegistrationSMTMock");
     const VerifierMock = await ethers.getContractFactory("VerifierMock");
-    const Voting = await ethers.getContractFactory("Voting");
+    const Voting = await ethers.getContractFactory("BioPassportVoting");
 
     const registrationSMTMock = await RegistrationSMTMock.deploy();
     const verifierMock = await VerifierMock.deploy();
@@ -54,9 +55,9 @@ describe("Voting", () => {
     voting = await Voting.deploy();
 
     let proxy = await Proxy.deploy(await voting.getAddress(), "0x");
-    voting = voting.attach(await proxy.getAddress()) as Voting;
+    voting = voting.attach(await proxy.getAddress()) as BioPassportVoting;
 
-    await voting.__Voting_init(
+    await voting.__BioPassportVoting_init(
       await registrationSMTMock.getAddress(),
       await proposalsState.getAddress(),
       await verifierMock.getAddress(),
@@ -112,7 +113,7 @@ describe("Voting", () => {
   }
 
   describe("#vote", () => {
-    it("should vote", async () => {
+    it.only("should vote", async () => {
       const proposalConfig: ProposalsState.ProposalConfigStruct = {
         startTimestamp: await time.latest(),
         duration: 11223344,
@@ -140,14 +141,12 @@ describe("Voting", () => {
         c: [0, 0],
       };
 
-      await voting.vote(
-        ethers.hexlify(ethers.randomBytes(32)),
-        await getCurrentDate(),
-        1,
-        [1, 4, 2],
-        userData,
-        zkProof,
+      const encodedData = ethers.AbiCoder.defaultAbiCoder().encode(
+        ["uint256", "uint256[]", "tuple(uint256,uint256,uint256)"],
+        [1, [1, 4, 2], Object.values(userData)],
       );
+
+      await voting.execute(ethers.hexlify(ethers.randomBytes(32)), await getCurrentDate(), encodedData, zkProof);
 
       const proposalInfo = await proposalsState.getProposalInfo(1);
 

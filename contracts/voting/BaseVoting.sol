@@ -1,19 +1,18 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.28;
 
+import {UUPSUpgradeable} from "@openzeppelin/contracts/proxy/utils/UUPSUpgradeable.sol";
 import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 
 import {ArrayHelper} from "@solarity/solidity-lib/libs/arrays/ArrayHelper.sol";
-import {UUPSUpgradeable} from "@openzeppelin/contracts/proxy/utils/UUPSUpgradeable.sol";
-import {VerifierHelper} from "@solarity/solidity-lib/libs/zkp/snarkjs/VerifierHelper.sol";
 
-import {Date2Time} from "@rarimo/passport-contracts/utils/Date2Time.sol";
+import {AQueryProofVerifierBuilder} from "@rarimo/passport-contracts/sdk/AQueryProofVerifierBuilder.sol";
 
 import {ProposalsState} from "../state/ProposalsState.sol";
 
 import {BinSearch} from "../utils/BinSearch.sol";
 
-abstract contract BaseVoting is OwnableUpgradeable, UUPSUpgradeable {
+abstract contract BaseVoting is OwnableUpgradeable, AQueryProofVerifierBuilder, UUPSUpgradeable {
     using BinSearch for *;
 
     uint256 public constant ZERO_DATE = 0x303030303030;
@@ -35,10 +34,7 @@ abstract contract BaseVoting is OwnableUpgradeable, UUPSUpgradeable {
         uint256 expirationDateLowerBound;
     }
 
-    address public registrationSMT;
-
     address public proposalsState;
-    address public votingVerifier;
 
     error InvalidZKProof(uint256[] pubSignals_);
 
@@ -48,21 +44,10 @@ abstract contract BaseVoting is OwnableUpgradeable, UUPSUpgradeable {
         address votingVerifier_
     ) internal onlyInitializing {
         __Ownable_init();
-
-        registrationSMT = registrationSMT_;
+        __AQueryProofVerifierBuilder_init(registrationSMT_, votingVerifier_);
 
         proposalsState = proposalsState_;
-        votingVerifier = votingVerifier_;
     }
-
-    function vote(
-        bytes32 registrationRoot_,
-        uint256 currentDate_,
-        uint256 proposalId_,
-        uint256[] memory vote_,
-        UserData memory userData_,
-        VerifierHelper.ProofPoints memory zkPoints_
-    ) external virtual;
 
     function _getProposalRules(
         uint256 proposalId_
@@ -74,27 +59,6 @@ abstract contract BaseVoting is OwnableUpgradeable, UUPSUpgradeable {
         require(thisId < proposalConfig_.votingWhitelist.length, "Voting: not whitelisted voting");
 
         proposalRules_ = abi.decode(proposalConfig_.votingWhitelistData[thisId], (ProposalRules));
-    }
-
-    function _validateDate(uint256 date_) internal view returns (bool) {
-        uint256[] memory asciiTime = new uint256[](3);
-
-        for (uint256 i = 0; i < 6; ++i) {
-            uint256 asciiNum_ = uint8(date_ >> ((6 - i - 1) * 8)) - 48;
-
-            asciiTime[i / 2] += i % 2 == 0 ? asciiNum_ * 10 : asciiNum_;
-        }
-
-        uint256 parsedTimestamp = Date2Time.timestampFromDate(
-            asciiTime[0] + 2000, // only the last 2 digits of the year are encoded
-            asciiTime[1],
-            asciiTime[2]
-        );
-
-        // +- 1 day validity
-        return
-            parsedTimestamp > block.timestamp - 1 days &&
-            parsedTimestamp < block.timestamp + 1 days;
     }
 
     function _validateCitizenship(
