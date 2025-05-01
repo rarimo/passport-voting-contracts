@@ -15,8 +15,6 @@ import {BinSearch} from "../utils/BinSearch.sol";
 abstract contract BaseVoting is OwnableUpgradeable, AQueryProofVerifierBuilder, UUPSUpgradeable {
     using BinSearch for *;
 
-    uint256 public constant ZERO_DATE = 0x303030303030;
-
     struct UserData {
         uint256 nullifier;
         uint256 citizenship;
