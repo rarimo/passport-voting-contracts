@@ -1,11 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.28;
 
-import {PublicSignalsBuilder} from "@rarimo/passport-contracts/sdk/PublicSignalsBuilder.sol";
+import {IPoseidonSMT} from "@rarimo/passport-contracts/interfaces/state/IPoseidonSMT.sol";
+import {PublicSignalsBuilder} from "@rarimo/passport-contracts/sdk/lib/PublicSignalsBuilder.sol";
 
 import {BaseVoting} from "./BaseVoting.sol";
-
-import {IPoseidonSMT} from "../interfaces/IPoseidonSMT.sol";
 
 import {ProposalsState} from "../state/ProposalsState.sol";
 
@@ -22,7 +21,11 @@ contract BioPassportVoting is BaseVoting {
         __BaseVoting_init(registrationSMT_, proposalsState_, votingVerifier_);
     }
 
-    function _beforeVerify(bytes memory userPayload_) public override {
+    function _beforeVerify(
+        bytes32 registrationRoot_,
+        uint256 currentDate_,
+        bytes memory userPayload_
+    ) public override {
         (uint256 proposalId_, uint256[] memory vote_, UserData memory userData_) = abi.decode(
             userPayload_,
             (uint256, uint256[], UserData)
@@ -37,7 +40,11 @@ contract BioPassportVoting is BaseVoting {
         );
     }
 
-    function _afterVerify(bytes memory userPayload_) public override {
+    function _afterVerify(
+        bytes32 registrationRoot_,
+        uint256 currentDate_,
+        bytes memory userPayload_
+    ) public override {
         (uint256 proposalId_, uint256[] memory vote_, UserData memory userData_) = abi.decode(
             userPayload_,
             (uint256, uint256[], UserData)
@@ -47,6 +54,8 @@ contract BioPassportVoting is BaseVoting {
     }
 
     function _buildPublicSignals(
+        bytes32 registrationRoot_,
+        uint256 currentDate_,
         bytes memory userPayload_
     ) public override returns (uint256 dataPointer_) {
         (uint256 proposalId_, uint256[] memory vote_, UserData memory userData_) = abi.decode(
@@ -92,7 +101,7 @@ contract BioPassportVoting is BaseVoting {
         );
         builder_.withExpirationDateLowerboundAndUpperbound(
             proposalRules_.expirationDateLowerBound,
-            ZERO_DATE
+            PublicSignalsBuilder.ZERO_DATE
         );
 
         return builder_;

@@ -6,13 +6,13 @@ import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/Own
 
 import {ArrayHelper} from "@solarity/solidity-lib/libs/arrays/ArrayHelper.sol";
 
-import {AQueryProofVerifierBuilder} from "@rarimo/passport-contracts/sdk/AQueryProofVerifierBuilder.sol";
+import {AQueryProofExecutor} from "@rarimo/passport-contracts/sdk/AQueryProofExecutor.sol";
 
 import {ProposalsState} from "../state/ProposalsState.sol";
 
 import {BinSearch} from "../utils/BinSearch.sol";
 
-abstract contract BaseVoting is OwnableUpgradeable, AQueryProofVerifierBuilder, UUPSUpgradeable {
+abstract contract BaseVoting is OwnableUpgradeable, AQueryProofExecutor, UUPSUpgradeable {
     using BinSearch for *;
 
     struct UserData {
@@ -42,7 +42,7 @@ abstract contract BaseVoting is OwnableUpgradeable, AQueryProofVerifierBuilder, 
         address votingVerifier_
     ) internal onlyInitializing {
         __Ownable_init();
-        __AQueryProofVerifierBuilder_init(registrationSMT_, votingVerifier_);
+        __AQueryProofExecutor_init(registrationSMT_, votingVerifier_);
 
         proposalsState = proposalsState_;
     }
