@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.28;
 
-import {IPoseidonSMT} from "../interfaces/IPoseidonSMT.sol";
+import {IPoseidonSMT} from "@rarimo/passport-contracts/interfaces/state/IPoseidonSMT.sol";
 
 contract RegistrationSMTMock is IPoseidonSMT {
     function ROOT_VALIDITY() external view returns (uint256) {

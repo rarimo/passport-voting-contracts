@@ -1,18 +1,16 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.28;
 
-import {VerifierHelper} from "@solarity/solidity-lib/libs/zkp/snarkjs/VerifierHelper.sol";
-
-import {IPoseidonSMT} from "../interfaces/IPoseidonSMT.sol";
+import {IPoseidonSMT} from "@rarimo/passport-contracts/interfaces/state/IPoseidonSMT.sol";
+import {PublicSignalsBuilder} from "@rarimo/passport-contracts/sdk/lib/PublicSignalsBuilder.sol";
 
 import {BaseVoting} from "./BaseVoting.sol";
 
 import {ProposalsState} from "../state/ProposalsState.sol";
 
 contract BioPassportVoting is BaseVoting {
-    using VerifierHelper for address;
+    using PublicSignalsBuilder for uint256;
 
-    uint256 public constant PROOF_SIGNALS_COUNT = 23;
     uint256 public constant IDENTITY_LIMIT = type(uint32).max;
 
     function __BioPassportVoting_init(
@@ -23,26 +21,49 @@ contract BioPassportVoting is BaseVoting {
         __BaseVoting_init(registrationSMT_, proposalsState_, votingVerifier_);
     }
 
-    function vote(
+    function _beforeVerify(
         bytes32 registrationRoot_,
         uint256 currentDate_,
-        uint256 proposalId_,
-        uint256[] memory vote_,
-        UserData memory userData_,
-        VerifierHelper.ProofPoints memory zkPoints_
-    ) external override {
-        uint256 proposalEventId = ProposalsState(proposalsState).getProposalEventId(proposalId_);
+        bytes memory userPayload_
+    ) public override {
+        (uint256 proposalId_, uint256[] memory vote_, UserData memory userData_) = abi.decode(
+            userPayload_,
+            (uint256, uint256[], UserData)
+        );
+
         ProposalRules memory proposalRules_ = _getProposalRules(proposalId_);
 
-        require(
-            IPoseidonSMT(registrationSMT).isRootValid(registrationRoot_),
-            "Voting: registration root is not valid"
-        );
-        require(_validateDate(currentDate_), "Voting: date too far");
         require(
             _validateCitizenship(proposalRules_.citizenshipWhitelist, userData_.citizenship),
             "Voting: citizenship is not whitelisted"
         );
+    }
+
+    function _afterVerify(
+        bytes32 registrationRoot_,
+        uint256 currentDate_,
+        bytes memory userPayload_
+    ) public override {
+        (uint256 proposalId_, uint256[] memory vote_, UserData memory userData_) = abi.decode(
+            userPayload_,
+            (uint256, uint256[], UserData)
+        );
+
+        ProposalsState(proposalsState).vote(proposalId_, userData_.nullifier, vote_);
+    }
+
+    function _buildPublicSignals(
+        bytes32 registrationRoot_,
+        uint256 currentDate_,
+        bytes memory userPayload_
+    ) public override returns (uint256) {
+        (uint256 proposalId_, uint256[] memory vote_, UserData memory userData_) = abi.decode(
+            userPayload_,
+            (uint256, uint256[], UserData)
+        );
+
+        uint256 proposalEventId = ProposalsState(proposalsState).getProposalEventId(proposalId_);
+        ProposalRules memory proposalRules_ = _getProposalRules(proposalId_);
 
         /**
          * By default we check that the identity is created before the identityCreationTimestampUpperBound (proposal start)
@@ -51,7 +72,8 @@ contract BioPassportVoting is BaseVoting {
          * The registration root will still be valid and a user may bring 100 roots to vote 100 times.
          */
         uint256 identityCreationTimestampUpperBound = proposalRules_
-            .identityCreationTimestampUpperBound - IPoseidonSMT(registrationSMT).ROOT_VALIDITY();
+            .identityCreationTimestampUpperBound -
+            IPoseidonSMT(getRegistrationSMT()).ROOT_VALIDITY();
         uint256 identityCounterUpperBound = IDENTITY_LIMIT;
 
         // If identity is issued after the proposal start, it should not be reissued more than identityCounterUpperBound
@@ -60,25 +82,27 @@ contract BioPassportVoting is BaseVoting {
             identityCounterUpperBound = proposalRules_.identityCounterUpperBound;
         }
 
-        uint256[] memory pubSignals_ = new uint256[](PROOF_SIGNALS_COUNT);
+        uint256 builder_ = PublicSignalsBuilder.newPublicSignalsBuilder(
+            proposalRules_.selector,
+            userData_.nullifier
+        );
+        builder_.withEventIdAndData(
+            proposalEventId,
+            uint256(uint248(uint256(keccak256(abi.encode(vote_)))))
+        );
+        builder_.withSex(proposalRules_.sex);
+        builder_.withCitizenship(userData_.citizenship);
+        builder_.withTimestampLowerboundAndUpperbound(0, identityCreationTimestampUpperBound);
+        builder_.withIdentityCounterLowerbound(0, identityCounterUpperBound);
+        builder_.withBirthDateLowerboundAndUpperbound(
+            proposalRules_.birthDateLowerbound,
+            proposalRules_.birthDateUpperbound
+        );
+        builder_.withExpirationDateLowerboundAndUpperbound(
+            proposalRules_.expirationDateLowerBound,
+            PublicSignalsBuilder.ZERO_DATE
+        );
 
-        pubSignals_[0] = userData_.nullifier; // output, nullifier
-        pubSignals_[6] = userData_.citizenship; // input, citizenship
-        pubSignals_[7] = proposalRules_.sex; // input, sex
-        pubSignals_[9] = proposalEventId; // input, eventId
-        pubSignals_[10] = uint248(uint256(keccak256(abi.encode(vote_)))); // input, eventData
-        pubSignals_[11] = uint256(registrationRoot_); // input, idStateRoot
-        pubSignals_[12] = proposalRules_.selector; // input, selector
-        pubSignals_[13] = currentDate_; // input, currentDate
-        pubSignals_[15] = identityCreationTimestampUpperBound; // input, timestampUpperbound
-        pubSignals_[17] = identityCounterUpperBound; // input, identityCounterUpperbound
-        pubSignals_[18] = proposalRules_.birthDateLowerbound; // input, birthDateLowerbound
-        pubSignals_[19] = proposalRules_.birthDateUpperbound; // input, birthDateUpperbound
-        pubSignals_[20] = proposalRules_.expirationDateLowerBound; // input, expirationDateLowerbound
-        pubSignals_[21] = ZERO_DATE; // input, expirationDateUpperbound
-
-        require(votingVerifier.verifyProof(pubSignals_, zkPoints_), InvalidZKProof(pubSignals_));
-
-        ProposalsState(proposalsState).vote(proposalId_, userData_.nullifier, vote_);
+        return builder_;
     }
 }

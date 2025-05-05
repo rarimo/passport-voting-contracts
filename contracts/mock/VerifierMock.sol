@@ -6,7 +6,7 @@ contract VerifierMock {
         uint256[2] calldata pA_,
         uint256[2][2] calldata pB_,
         uint256[2] calldata pC_,
-        uint256[24] calldata pubSignals_
+        uint256[23] calldata pubSignals_
     ) public view returns (bool) {
         return true;
     }
