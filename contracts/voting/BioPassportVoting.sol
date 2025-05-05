@@ -31,7 +31,6 @@ contract BioPassportVoting is BaseVoting {
             (uint256, uint256[], UserData)
         );
 
-        uint256 proposalEventId = ProposalsState(proposalsState).getProposalEventId(proposalId_);
         ProposalRules memory proposalRules_ = _getProposalRules(proposalId_);
 
         require(
@@ -57,7 +56,7 @@ contract BioPassportVoting is BaseVoting {
         bytes32 registrationRoot_,
         uint256 currentDate_,
         bytes memory userPayload_
-    ) public override returns (uint256 dataPointer_) {
+    ) public override returns (uint256) {
         (uint256 proposalId_, uint256[] memory vote_, UserData memory userData_) = abi.decode(
             userPayload_,
             (uint256, uint256[], UserData)

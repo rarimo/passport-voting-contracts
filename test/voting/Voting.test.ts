@@ -113,7 +113,7 @@ describe("Voting", () => {
   }
 
   describe("#vote", () => {
-    it.only("should vote", async () => {
+    it("should vote", async () => {
       const proposalConfig: ProposalsState.ProposalConfigStruct = {
         startTimestamp: await time.latest(),
         duration: 11223344,
