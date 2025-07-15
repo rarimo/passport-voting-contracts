@@ -44,7 +44,6 @@ const config: HardhatUserConfig = {
     },
     "rarimo-beta": {
       url: "https://rpc.evm.mainnet.rarimo.com",
-      accounts: privateKey(),
       gasPrice: 0,
       gasMultiplier: 1.2,
     },
