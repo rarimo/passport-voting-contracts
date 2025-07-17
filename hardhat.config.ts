@@ -51,6 +51,10 @@ const config: HardhatUserConfig = {
       url: "https://rpc.qtestnet.org/",
       accounts: privateKey(),
     },
+    "rarimo-l2-testnet": {
+      url: "https://l2.testnet.rarimo.com",
+      gasMultiplier: 1.2,
+    },
   },
   solidity: {
     version: "0.8.28",
@@ -67,6 +71,7 @@ const config: HardhatUserConfig = {
       "rarimo-l2": "abc",
       "rarimo-beta": "abc",
       "q-testnet": "abc",
+      "rarimo-l2-testnet": "abc",
     },
     customChains: [
       {
@@ -91,6 +96,14 @@ const config: HardhatUserConfig = {
         urls: {
           apiURL: "https://evmscan.l2.rarimo.com/api",
           browserURL: "https://scan.rarimo.com/",
+        },
+      },
+      {
+        network: "rarimo-l2-testnet",
+        chainId: 7369,
+        urls: {
+          apiURL: "https://scan.testnet.rarimo.com/api",
+          browserURL: "https://scan.testnet.rarimo.com",
         },
       },
     ],
