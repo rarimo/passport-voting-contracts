@@ -56,7 +56,7 @@ contract NoirIDVoting is BaseVoting {
         bytes32 registrationRoot_,
         uint256 currentDate_,
         bytes memory userPayload_
-    ) public override returns (uint256) {
+    ) public view override returns (uint256) {
         (uint256 proposalId_, uint256[] memory vote_, UserData memory userData_) = abi.decode(
             userPayload_,
             (uint256, uint256[], UserData)
