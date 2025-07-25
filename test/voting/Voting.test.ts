@@ -7,7 +7,7 @@ import { SignerWithAddress } from "@nomicfoundation/hardhat-ethers/signers";
 
 import { Reverter, getPoseidon, votingName } from "@/test/helpers";
 
-import { BaseVoting, VerifierHelper } from "@/generated-types/ethers/contracts/voting/Voting";
+import { AQueryProofExecutor } from "@/generated-types/ethers/contracts/voting/BaseVoting";
 
 import { BioPassportVoting, ProposalsState } from "@ethers-v6";
 
@@ -126,13 +126,13 @@ describe("Voting", () => {
 
       await proposalsState.createProposal(proposalConfig);
 
-      const userData: BaseVoting.UserDataStruct = {
+      const userData = {
         nullifier: ethers.hexlify(ethers.randomBytes(31)),
         citizenship: 0x554b52,
         identityCreationTimestamp: 123456,
       };
 
-      const zkProof: VerifierHelper.ProofPointsStruct = {
+      const zkProof: AQueryProofExecutor.ProofPointsStruct = {
         a: [0, 0],
         b: [
           [0, 0],

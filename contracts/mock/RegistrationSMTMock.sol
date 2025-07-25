@@ -4,7 +4,7 @@ pragma solidity 0.8.28;
 import {IPoseidonSMT} from "@rarimo/passport-contracts/interfaces/state/IPoseidonSMT.sol";
 
 contract RegistrationSMTMock is IPoseidonSMT {
-    function ROOT_VALIDITY() external view returns (uint256) {
+    function ROOT_VALIDITY() external pure returns (uint256) {
         return 1 hours;
     }
 
