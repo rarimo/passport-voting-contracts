@@ -31,7 +31,7 @@ contract NoirIDVoting is BaseVoting {
             (uint256, uint256[], UserData)
         );
 
-        ProposalRules memory proposalRules_ = _getProposalRules(proposalId_);
+        ProposalRules memory proposalRules_ = getProposalRules(proposalId_);
 
         require(
             _validateCitizenship(proposalRules_.citizenshipWhitelist, userData_.citizenship),
@@ -63,7 +63,7 @@ contract NoirIDVoting is BaseVoting {
         );
 
         uint256 proposalEventId = ProposalsState(proposalsState).getProposalEventId(proposalId_);
-        ProposalRules memory proposalRules_ = _getProposalRules(proposalId_);
+        ProposalRules memory proposalRules_ = getProposalRules(proposalId_);
 
         /**
          * By default we check that the identity is created before the identityCreationTimestampUpperBound (proposal start)
@@ -86,6 +86,7 @@ contract NoirIDVoting is BaseVoting {
             proposalRules_.selector,
             userData_.nullifier
         );
+        builder_.withCurrentDate(currentDate_, 1 days);
         builder_.withEventIdAndData(
             proposalEventId,
             uint256(uint248(uint256(keccak256(abi.encode(vote_)))))
