@@ -27,6 +27,7 @@
     "deploy-localhost": "npx hardhat migrate --network localhost",
     "deploy-sepolia": "npx hardhat migrate --network sepolia --verify",
     "deploy-rarimo-l2": "npx hardhat migrate --network rarimo-l2 --verify",
+    "deploy-rarimo-l2-testnet": "npx hardhat migrate --network rarimo-l2-testnet --verify",
     "deploy-rarimo-beta": "npx hardhat migrate --network rarimo-beta --verify",
     "deploy-q-testnet": "npx hardhat migrate --network q-testnet --verify",
     "generate-types": "TYPECHAIN_FORCE=true npx hardhat typechain && npx hardhat gobind",
