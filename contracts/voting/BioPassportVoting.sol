@@ -21,7 +21,7 @@ contract BioPassportVoting is BaseVoting {
         __BaseVoting_init(registrationSMT_, proposalsState_, votingVerifier_);
     }
 
-    function _beforeVerify(bytes32, uint256, bytes memory userPayload_) public view override {
+    function _beforeVerify(bytes32, uint256, bytes memory userPayload_) internal view override {
         (uint256 proposalId_, , UserData memory userData_) = abi.decode(
             userPayload_,
             (uint256, uint256[], UserData)
@@ -35,7 +35,7 @@ contract BioPassportVoting is BaseVoting {
         );
     }
 
-    function _afterVerify(bytes32, uint256, bytes memory userPayload_) public override {
+    function _afterVerify(bytes32, uint256, bytes memory userPayload_) internal override {
         (uint256 proposalId_, uint256[] memory vote_, UserData memory userData_) = abi.decode(
             userPayload_,
             (uint256, uint256[], UserData)
@@ -48,7 +48,7 @@ contract BioPassportVoting is BaseVoting {
         bytes32,
         uint256 currentDate_,
         bytes memory userPayload_
-    ) public view override returns (uint256) {
+    ) internal view override returns (uint256) {
         (uint256 proposalId_, uint256[] memory vote_, UserData memory userData_) = abi.decode(
             userPayload_,
             (uint256, uint256[], UserData)
