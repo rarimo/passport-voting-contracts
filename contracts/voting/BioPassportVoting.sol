@@ -46,7 +46,7 @@ contract BioPassportVoting is BaseVoting {
 
     function _buildPublicSignals(
         bytes32,
-        uint256,
+        uint256 currentDate_,
         bytes memory userPayload_
     ) public view override returns (uint256) {
         (uint256 proposalId_, uint256[] memory vote_, UserData memory userData_) = abi.decode(
@@ -78,6 +78,7 @@ contract BioPassportVoting is BaseVoting {
             proposalRules_.selector,
             userData_.nullifier
         );
+        builder_.withCurrentDate(currentDate_, 1 days);
         builder_.withEventIdAndData(
             proposalEventId,
             uint256(uint248(uint256(keccak256(abi.encode(vote_)))))
