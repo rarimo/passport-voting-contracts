@@ -21,17 +21,13 @@ contract BioPassportVoting is BaseVoting {
         __BaseVoting_init(registrationSMT_, proposalsState_, votingVerifier_);
     }
 
-    function _beforeVerify(
-        bytes32 registrationRoot_,
-        uint256 currentDate_,
-        bytes memory userPayload_
-    ) public override {
-        (uint256 proposalId_, uint256[] memory vote_, UserData memory userData_) = abi.decode(
+    function _beforeVerify(bytes32, uint256, bytes memory userPayload_) internal view override {
+        (uint256 proposalId_, , UserData memory userData_) = abi.decode(
             userPayload_,
             (uint256, uint256[], UserData)
         );
 
-        ProposalRules memory proposalRules_ = _getProposalRules(proposalId_);
+        ProposalRules memory proposalRules_ = getProposalRules(proposalId_);
 
         require(
             _validateCitizenship(proposalRules_.citizenshipWhitelist, userData_.citizenship),
@@ -39,11 +35,7 @@ contract BioPassportVoting is BaseVoting {
         );
     }
 
-    function _afterVerify(
-        bytes32 registrationRoot_,
-        uint256 currentDate_,
-        bytes memory userPayload_
-    ) public override {
+    function _afterVerify(bytes32, uint256, bytes memory userPayload_) internal override {
         (uint256 proposalId_, uint256[] memory vote_, UserData memory userData_) = abi.decode(
             userPayload_,
             (uint256, uint256[], UserData)
@@ -53,17 +45,17 @@ contract BioPassportVoting is BaseVoting {
     }
 
     function _buildPublicSignals(
-        bytes32 registrationRoot_,
+        bytes32,
         uint256 currentDate_,
         bytes memory userPayload_
-    ) public override returns (uint256) {
+    ) internal view override returns (uint256) {
         (uint256 proposalId_, uint256[] memory vote_, UserData memory userData_) = abi.decode(
             userPayload_,
             (uint256, uint256[], UserData)
         );
 
         uint256 proposalEventId = ProposalsState(proposalsState).getProposalEventId(proposalId_);
-        ProposalRules memory proposalRules_ = _getProposalRules(proposalId_);
+        ProposalRules memory proposalRules_ = getProposalRules(proposalId_);
 
         /**
          * By default we check that the identity is created before the identityCreationTimestampUpperBound (proposal start)
@@ -86,6 +78,7 @@ contract BioPassportVoting is BaseVoting {
             proposalRules_.selector,
             userData_.nullifier
         );
+        builder_.withCurrentDate(currentDate_, 1 days);
         builder_.withEventIdAndData(
             proposalEventId,
             uint256(uint248(uint256(keccak256(abi.encode(vote_)))))

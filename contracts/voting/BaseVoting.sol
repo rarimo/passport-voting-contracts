@@ -47,9 +47,9 @@ abstract contract BaseVoting is OwnableUpgradeable, AQueryProofExecutor, UUPSUpg
         proposalsState = proposalsState_;
     }
 
-    function _getProposalRules(
+    function getProposalRules(
         uint256 proposalId_
-    ) internal view returns (ProposalRules memory proposalRules_) {
+    ) public view returns (ProposalRules memory proposalRules_) {
         ProposalsState.ProposalConfig memory proposalConfig_ = ProposalsState(proposalsState)
             .getProposalConfig(proposalId_);
 
