@@ -47,8 +47,8 @@ contract BioPassportVoting is BaseVoting {
 
     function _buildPublicSignalsTD1(
         bytes32,
-        uint256 currentDate_,
-        bytes memory userPayload_
+        uint256,
+        bytes memory
     ) internal pure override returns (uint256) {
         revert("TD1 voting is not supported.");
     }

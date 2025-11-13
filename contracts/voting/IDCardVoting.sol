@@ -101,8 +101,8 @@ contract IDCardVoting is BaseVoting {
 
     function _buildPublicSignals(
         bytes32,
-        uint256 currentDate_,
-        bytes memory userPayload_
+        uint256,
+        bytes memory
     ) internal pure override returns (uint256) {
         revert("TD3 voting is not supported.");
     }
