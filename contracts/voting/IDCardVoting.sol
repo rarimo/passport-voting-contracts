@@ -2,7 +2,6 @@
 pragma solidity 0.8.28;
 
 import {IPoseidonSMT} from "@rarimo/passport-contracts/interfaces/state/IPoseidonSMT.sol";
-import {PublicSignalsBuilder} from "@rarimo/passport-contracts/sdk/lib/PublicSignalsBuilder.sol";
 import {PublicSignalsTD1Builder} from "@rarimo/passport-contracts/sdk/lib/PublicSignalsTD1Builder.sol";
 
 import {BaseVoting} from "./BaseVoting.sol";
@@ -10,7 +9,7 @@ import {BaseVoting} from "./BaseVoting.sol";
 import {ProposalsState} from "../state/ProposalsState.sol";
 
 contract IDCardVoting is BaseVoting {
-    using PublicSignalsBuilder for uint256;
+    using PublicSignalsTD1Builder for uint256;
 
     uint256 public constant IDENTITY_LIMIT = type(uint32).max;
 
@@ -94,7 +93,7 @@ contract IDCardVoting is BaseVoting {
         );
         builder_.withExpirationDateLowerboundAndUpperbound(
             proposalRules_.expirationDateLowerBound,
-            PublicSignalsBuilder.ZERO_DATE
+            PublicSignalsTD1Builder.ZERO_DATE
         );
 
         return builder_;
